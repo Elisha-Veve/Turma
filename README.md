@@ -28,7 +28,7 @@ at the Claude Code prompt.**
 
 ```bash
 claude plugin marketplace add Elisha-Veve/Turma
-claude plugin install turma@coliseum
+claude plugin install turma@veve
 ```
 
 Restart Claude Code (skills only appear after a restart). Check with
@@ -188,8 +188,8 @@ with the real need it answers.
 ## Updating
 
 ```bash
-claude plugin marketplace update coliseum
-claude plugin update turma@coliseum
+claude plugin marketplace update veve
+claude plugin update turma@veve
 ```
 
 Restart Claude Code. Repos you already bootstrapped keep their copies of the hook

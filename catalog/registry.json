@@ -1,6 +1,6 @@
 {
   "_comment": "The entered-once index of the base catalog shipped with the plugin. Every file under catalog/ (bar this one) is listed here exactly once, with the real need it answers. turma:bootstrap selects from this list; scripts/check.mjs proves the list and the directory agree. A user's own additions live in an overlay catalog under TURMA_HOME, never here. catalogVersion tracks plugin.json version - any change here is a plugin change.",
-  "catalogVersion": "0.5.0",
+  "catalogVersion": "0.5.1",
   "blocks": [
     {
       "id": "hook/commit-queue",
