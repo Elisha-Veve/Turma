@@ -1,0 +1,21 @@
+{
+  "name": "turma",
+  "displayName": "Turma",
+  "version": "0.5.0",
+  "description": "Start a project from a discussion, provision its Claude Code setup from a catalog, design it with approved ADRs, cut GitHub Issues on a Project board, and work them one at a time. An optimizer proposes new agents, skills and hooks from your commits.",
+  "author": {
+    "name": "Elisha Elorm Kwesi Amenuveve"
+  },
+  "license": "MIT",
+  "keywords": [
+    "planning",
+    "adr",
+    "github-projects",
+    "tickets",
+    "bootstrap",
+    "optimizer",
+    "hooks",
+    "skills",
+    "agents"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "_comment": "Merged into a repo's .claude/settings.json by turma:bootstrap. Wires the Claude Code hooks: the two optimizer-loop nudges and the read-outside-repo guard. The git post-commit hook (hooks/commit-queue.sh) is installed into .git/hooks/post-commit, not here. Hook scripts are copied into <repo>/.claude/hooks/ so scripts/check.mjs can verify them against the catalog.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Grep|Glob",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/no-read-outside-repo.sh", "timeout": 10 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/after-commit-nudge.sh", "timeout": 10 }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/optimizer-nudge.sh", "timeout": 10 }
+        ]
+      }
+    ]
+  }
+}

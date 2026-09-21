@@ -1,0 +1,14 @@
+{
+  "name": "coliseum",
+  "owner": {
+    "name": "Elisha Elorm Kwesi Amenuveve"
+  },
+  "description": "Turma: a Claude Code plugin for planning and provisioning projects with agents, skills and hooks.",
+  "plugins": [
+    {
+      "name": "turma",
+      "source": "./",
+      "description": "Start a project from a discussion, provision its Claude Code setup from a catalog, design it with approved ADRs, cut GitHub Issues, and work them one at a time. An optimizer proposes new tooling from your commits."
+    }
+  ]
+}

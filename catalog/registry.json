@@ -1,0 +1,192 @@
+{
+  "_comment": "The entered-once index of the base catalog shipped with the plugin. Every file under catalog/ (bar this one) is listed here exactly once, with the real need it answers. turma:bootstrap selects from this list; scripts/check.mjs proves the list and the directory agree. A user's own additions live in an overlay catalog under TURMA_HOME, never here. catalogVersion tracks plugin.json version - any change here is a plugin change.",
+  "catalogVersion": "0.5.0",
+  "blocks": [
+    {
+      "id": "hook/commit-queue",
+      "kind": "hook",
+      "install": "git-post-commit",
+      "file": "hooks/commit-queue.sh",
+      "grounds": "Every commit, by a person or by Claude, must be visible to turma:optimize. git's post-commit hook is the only trigger that catches both; a Claude Code hook only sees commits Claude makes.",
+      "repos": [
+        "*"
+      ]
+    },
+    {
+      "id": "hook/optimizer-nudge",
+      "kind": "hook",
+      "install": "SessionEnd",
+      "file": "hooks/optimizer-nudge.sh",
+      "grounds": "The optimizer runs on demand, so a backlog is easy to forget. At session end, if commits sit unreviewed past optimizer-state.json, a notification names the count.",
+      "repos": [
+        "*"
+      ]
+    },
+    {
+      "id": "hook/after-commit-nudge",
+      "kind": "hook",
+      "install": "PostToolUse:Bash",
+      "file": "hooks/after-commit-nudge.sh",
+      "grounds": "After Claude commits, a one-line reminder that the queue grew and turma:optimize is the thing to run keeps the loop visible without running analysis mid-flow.",
+      "repos": [
+        "*"
+      ]
+    },
+    {
+      "id": "hook/no-read-outside-repo",
+      "kind": "hook",
+      "install": "PreToolUse:Read|Grep|Glob",
+      "file": "hooks/no-read-outside-repo.sh",
+      "grounds": "In accept-edits / auto mode Claude reads files outside the repo with no prompt. This blocks an outside-repo Read/Grep/Glob (allow list: the repo, the Turma source, ~/.claude, scratch dirs, TURMA_READ_ALLOW). Same reasoning as no-build-over-dev-server: a warn-only hook is ignored in the mode that needs it.",
+      "repos": [
+        "*"
+      ]
+    },
+    {
+      "id": "hook/no-build-over-dev-server",
+      "kind": "hook",
+      "install": "PreToolUse:Bash",
+      "file": "hooks/no-build-over-dev-server.sh",
+      "grounds": "next build writes over .next while next dev serves from it; every route then 500s with 'Cannot find module' until the server restarts and .next is cleared. The message names nothing. Ports come from TURMA_DEV_PORTS or .claude/launch.json.",
+      "repos": [
+        "next"
+      ]
+    },
+    {
+      "id": "pattern/agent-guard-deferring-auditor",
+      "kind": "pattern",
+      "file": "patterns/agent-guard-deferring-auditor.md",
+      "grounds": "The shape of the drift-auditor example (examples/agents/drift-auditor.md): read a diff, run the repo's own checker, defer to its verdict, report without fixing. Fill in the repo's source-of-truth and generated files.",
+      "repos": []
+    },
+    {
+      "id": "pattern/agent-schema-companion-updater",
+      "kind": "pattern",
+      "file": "patterns/agent-schema-companion-updater.md",
+      "grounds": "The shape of the schema-warden example (examples/agents/schema-warden.md): a data-shape change is half a change; write the migration, update every companion file, run the checker until green.",
+      "repos": []
+    },
+    {
+      "id": "pattern/agent-render-verifier",
+      "kind": "pattern",
+      "file": "patterns/agent-render-verifier.md",
+      "grounds": "The shape of the render-verifier example (examples/agents/render-verifier.md): render the real artifact, assert against extracted text and measured pages, never against the code that produced them.",
+      "repos": []
+    },
+    {
+      "id": "pattern/skill-run-checker-before-pr",
+      "kind": "pattern",
+      "file": "patterns/skill-run-checker-before-pr.md",
+      "grounds": "A repo with a guard script wants that script run, and its output read, before a PR opens. The skill wraps the exact command and refuses to pass on a silent skip.",
+      "repos": []
+    },
+    {
+      "id": "pattern/skill-regenerate-artifacts",
+      "kind": "pattern",
+      "file": "patterns/skill-regenerate-artifacts.md",
+      "grounds": "A repo that generates files from a source (README from data, screenshots from the app) wants one command that regenerates all of them and shows the diff.",
+      "repos": []
+    },
+    {
+      "id": "pattern/skill-launch-and-screenshot",
+      "kind": "pattern",
+      "file": "patterns/skill-launch-and-screenshot.md",
+      "grounds": "Confirming a change in the real app, not just the tests: launch on the repo's port (launch.json), drive it, capture a screenshot.",
+      "repos": []
+    },
+    {
+      "id": "claude-md/house-rule",
+      "kind": "claude-md",
+      "file": "claude-md/house-rule.md",
+      "grounds": "The rule Turma is built to defend, stated once so each CLAUDE.md carries the same words.",
+      "repos": [
+        "*"
+      ]
+    },
+    {
+      "id": "claude-md/style-no-marketing",
+      "kind": "claude-md",
+      "file": "claude-md/style-no-marketing.md",
+      "grounds": "A description rule worth reusing wherever prose ships to a reader: one sentence, no marketing words, do not start with the subject's own name.",
+      "repos": []
+    },
+    {
+      "id": "claude-md/style-no-em-dash",
+      "kind": "claude-md",
+      "file": "claude-md/style-no-em-dash.md",
+      "grounds": "A repo-wide typographic rule is cheap to state and annoying to retrofit; this states one (no em dashes).",
+      "repos": []
+    },
+    {
+      "id": "claude-md/layout-section",
+      "kind": "claude-md",
+      "file": "claude-md/layout-section.md",
+      "grounds": "A CLAUDE.md is more useful with a map of the tree and the common tasks; this is the skeleton for that section.",
+      "repos": [
+        "*"
+      ]
+    },
+    {
+      "id": "settings/deny-env-reads",
+      "kind": "settings",
+      "file": "settings/deny-env-reads.json",
+      "grounds": "A secret in .env or .env.local should never land in context. Every repo with local secrets wants this deny list.",
+      "repos": [
+        "*"
+      ]
+    },
+    {
+      "id": "settings/hook-wiring",
+      "kind": "settings",
+      "file": "settings/hook-wiring.json",
+      "grounds": "The settings.json fragment that wires the Claude Code hooks: the SessionEnd nudge, the after-commit context nudge, and the read-outside-repo guard. Merged into a repo's settings by the bootstrap.",
+      "repos": [
+        "*"
+      ]
+    },
+    {
+      "id": "doc-template/problem-statement",
+      "kind": "doc-template",
+      "file": "doc-templates/problem-statement.md",
+      "grounds": "turma:define needs one shape for a problem doc so docs/problems/<slug>.md means the same thing in every repo instead of each one inventing its own.",
+      "repos": []
+    },
+    {
+      "id": "doc-template/adr",
+      "kind": "doc-template",
+      "file": "doc-templates/adr.md",
+      "grounds": "turma:design writes docs/decisions/NNNN-title.md ADRs, each with Status/Context/Decision/Consequences, the common ADR layout, so every repo's decisions read the same way.",
+      "repos": []
+    },
+    {
+      "id": "doc-template/design-doc",
+      "kind": "doc-template",
+      "file": "doc-templates/design-doc.md",
+      "grounds": "turma:design fills one skeleton for a topic doc (orientation, source of truth, generated, guard, decisions) instead of free-form prose a checker cannot recognise.",
+      "repos": []
+    },
+    {
+      "id": "doc-template/github-issue-body",
+      "kind": "doc-template",
+      "file": "doc-templates/github-issue-body.md",
+      "grounds": "A ticket that does not cite the design section it implements is invented, not grounded - the house rule extended to GitHub Issues. turma:tickets fills this for every issue it opens.",
+      "repos": []
+    },
+    {
+      "id": "claude-md/workflow",
+      "kind": "claude-md",
+      "file": "claude-md/workflow.md",
+      "grounds": "Every repo can run problem -> design -> tickets -> work; a CLAUDE.md that never mentions the loop leaves it undiscoverable to a fresh Claude Code session.",
+      "repos": [
+        "*"
+      ]
+    },
+    {
+      "id": "doc-template/project-readme",
+      "kind": "doc-template",
+      "file": "doc-templates/project-readme.md",
+      "grounds": "turma:init needs one shape for a new repo README so turma:bootstrap and turma:design read the same section names (what it produces, source of truth, generated, stack, guard) in every project.",
+      "repos": []
+    }
+  ]
+}
