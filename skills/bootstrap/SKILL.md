@@ -52,9 +52,14 @@ echo; echo "Target directory:"; pwd; ls -A | head -30
    for a similar scope is a default yes; a `rejected` one is a default no. Every repo gets
    `claude-md/house-rule`, `claude-md/workflow`, `settings/deny-env-reads`,
    `settings/hook-wiring`, `hook/commit-queue`, `hook/optimizer-nudge`,
-   `hook/after-commit-nudge`, `hook/no-read-outside-repo`. A Next.js repo also gets
-   `hook/no-build-over-dev-server`. A repo that generates a document gets a
-   `<repo>-render-verifier` from `patterns/agent-render-verifier.md`. And so on.
+   `hook/after-commit-nudge`. A Next.js repo also gets `hook/no-build-over-dev-server`.
+   A repo that generates a document gets a `<repo>-render-verifier` from
+   `patterns/agent-render-verifier.md`. And so on.
+
+   `hook/no-read-outside-repo` is opt-in, not a default - offer it when the user asks
+   for it or names the concern (auto mode reading outside the repo). If selected, also
+   select `settings/hook-wiring-read-guard` alongside `settings/hook-wiring`; the two
+   travel together, or `settings.json` points at a hook script that was never copied in.
 
 3. **Write the provisioning report.** A table: block, why it fits this repo, the real
    file or command it is grounded in, and where it lands (user level if shared, `.claude/`
@@ -67,8 +72,10 @@ echo; echo "Target directory:"; pwd; ls -A | head -30
 5. **On approval, scaffold:**
    - If the target is not a git repo yet, `git init` it (the post-commit hook and the
      optimizer loop need one). Add a `.gitignore` if there is none.
-   - `<repo>/.claude/settings.json` - merge `settings/deny-env-reads.json` and
-     `settings/hook-wiring.json` (deep-merge into any existing file; do not clobber).
+   - `<repo>/.claude/settings.json` - merge `settings/deny-env-reads.json`,
+     `settings/hook-wiring.json`, and `settings/hook-wiring-read-guard.json` if
+     `hook/no-read-outside-repo` was selected (deep-merge into any existing file; do
+     not clobber).
    - `<repo>/.claude/hooks/` - copy each selected catalog `hooks/*.sh` verbatim,
      `chmod +x`.
    - `<repo>/.git/hooks/post-commit` - install catalog `hooks/commit-queue.sh`. If one

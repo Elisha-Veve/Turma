@@ -1,0 +1,13 @@
+{
+  "_comment": "Merged into a repo's .claude/settings.json only when hook/no-read-outside-repo is installed - the two travel together, or a PreToolUse entry points at a hook script that was never copied in.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Grep|Glob",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/no-read-outside-repo.sh", "timeout": 10 }
+        ]
+      }
+    ]
+  }
+}

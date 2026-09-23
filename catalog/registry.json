@@ -1,6 +1,6 @@
 {
   "_comment": "The entered-once index of the base catalog shipped with the plugin. Every file under catalog/ (bar this one) is listed here exactly once, with the real need it answers. turma:bootstrap selects from this list; scripts/check.mjs proves the list and the directory agree. A user's own additions live in an overlay catalog under TURMA_HOME, never here. catalogVersion tracks plugin.json version - any change here is a plugin change.",
-  "catalogVersion": "0.5.1",
+  "catalogVersion": "0.5.2",
   "blocks": [
     {
       "id": "hook/commit-queue",
@@ -37,10 +37,8 @@
       "kind": "hook",
       "install": "PreToolUse:Read|Grep|Glob",
       "file": "hooks/no-read-outside-repo.sh",
-      "grounds": "In accept-edits / auto mode Claude reads files outside the repo with no prompt. This blocks an outside-repo Read/Grep/Glob (allow list: the repo, the Turma source, ~/.claude, scratch dirs, TURMA_READ_ALLOW). Same reasoning as no-build-over-dev-server: a warn-only hook is ignored in the mode that needs it.",
-      "repos": [
-        "*"
-      ]
+      "grounds": "In accept-edits / auto mode Claude reads files outside the repo with no prompt. This blocks an outside-repo Read/Grep/Glob (allow list: the repo, TURMA_HOME, ~/.claude, scratch dirs, TURMA_READ_ALLOW). Opt-in, not a default - it also denies reads a user may want (a sibling repo, a shared library) and needs settings/hook-wiring-read-guard installed alongside it.",
+      "repos": []
     },
     {
       "id": "hook/no-build-over-dev-server",
@@ -139,10 +137,17 @@
       "id": "settings/hook-wiring",
       "kind": "settings",
       "file": "settings/hook-wiring.json",
-      "grounds": "The settings.json fragment that wires the Claude Code hooks: the SessionEnd nudge, the after-commit context nudge, and the read-outside-repo guard. Merged into a repo's settings by the bootstrap.",
+      "grounds": "The settings.json fragment that wires the two optimizer-loop nudges: the SessionEnd nudge and the after-commit context nudge. Merged into a repo's settings by the bootstrap.",
       "repos": [
         "*"
       ]
+    },
+    {
+      "id": "settings/hook-wiring-read-guard",
+      "kind": "settings",
+      "file": "settings/hook-wiring-read-guard.json",
+      "grounds": "The PreToolUse wiring for hook/no-read-outside-repo, kept separate from settings/hook-wiring so a repo without that hook never gets a settings.json entry pointing at a script it doesn't have. Merged only when hook/no-read-outside-repo is installed.",
+      "repos": []
     },
     {
       "id": "doc-template/problem-statement",
