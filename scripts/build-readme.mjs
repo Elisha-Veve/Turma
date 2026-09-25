@@ -55,7 +55,7 @@ function skillRows() {
     .sort()
     .map((name) => {
       const fm = frontmatter(readFileSync(join(dir, name, 'SKILL.md'), 'utf8'));
-      return `| \`/turma:${fm.name || name}\` | ${firstSentence(fm.description || '')} |`;
+      return `| \`/turma:${fm.name || name}\` | \`$${fm.name || name}\` | ${firstSentence(fm.description || '')} |`;
     });
 }
 
@@ -72,7 +72,7 @@ const readmePath = join(ROOT, 'README.md');
 const current = readFileSync(readmePath, 'utf8');
 
 const agents = ['| Agent | What it does |', '|---|---|', ...agentRows()].join('\n');
-const skills = ['| Skill | What it does |', '|---|---|', ...skillRows()].join('\n');
+const skills = ['| Claude Code | Codex | What it does |', '|---|---|---|', ...skillRows()].join('\n');
 
 let next = replaceBlock(current, 'agents', agents);
 next = replaceBlock(next, 'skills', skills);

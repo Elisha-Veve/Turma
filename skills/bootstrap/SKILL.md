@@ -1,114 +1,107 @@
 ---
 name: bootstrap
-description: Given a project's scope, decide the agents, skills and hooks it needs, show the reasoning, and on approval scaffold them from the Turma catalog.
-disable-model-invocation: true
-arguments: [scope]
+description: Provision a project's Claude Code, Codex, or combined setup from the Turma catalog, showing the grounded choices before scaffolding.
 ---
 
 # turma:bootstrap
 
-Provision a repo's Claude Code setup from `$scope` - which may be a sentence, a path to a
-scope document, or the path to the target directory (an empty one is fine; a `README.md`
-from `/turma:init` is the usual scope).
+First read [runtime conventions](../../references/runtime.md). `$scope` is a sentence,
+a scope document, or a target directory. A README from `init` is the usual scope.
 
-Everything you install is a selection over the catalog. The repo does not get invented
-config; it gets named blocks, and a manifest that records which ones so
-`scripts/check.mjs` can prove later that nothing drifted.
-
-## Where things live
-
-- **The base catalog** is `${CLAUDE_PLUGIN_ROOT}/catalog/` - read-only, shipped with the
-  plugin. Never write into it: `${CLAUDE_PLUGIN_ROOT}` is an install cache that
-  `claude plugin update` overwrites.
-- **The user directory** is `TURMA_HOME` (default `~/.claude/turma`) - this user's own
-  data, created on first write:
-  - `decisions.jsonl` - the append-only log of every ruling, read to bias selection.
-  - `catalog/registry.json` + `catalog/...` - an optional overlay of blocks this user
-    added, same shape as the base registry. Read alongside the base catalog.
-- **Shared across this user's repos** means the user level: overlay catalog blocks under
-  `TURMA_HOME`, agents in `~/.claude/agents/`, skills in `~/.claude/skills/`. **Local to
-  one repo** means that repo's `.claude/`.
+Select `claude`, `codex` or `both` from the user's request. Default to the active host
+for a new project; on an existing setup preserve the manifest's hosts and add the
+requested host. Do not remove the other host's setup. These are output targets, not
+instructions to launch another assistant.
 
 ## Context
 
-```!
-PLUGIN="${CLAUDE_PLUGIN_ROOT}"
-TURMA_HOME="${TURMA_HOME:-$HOME/.claude/turma}"
-echo "Base catalog:"; cat "$PLUGIN/catalog/registry.json"
-echo; echo "Overlay catalog:"; cat "$TURMA_HOME/catalog/registry.json" 2>/dev/null || echo "(none)"
-echo; echo "Prior decisions:"; cat "$TURMA_HOME/decisions.jsonl" 2>/dev/null || echo "(none yet)"
-echo; echo "Target directory:"; pwd; ls -A | head -30
-```
+Read the scope, README, existing project instructions (`CLAUDE.md` and `AGENTS.md`),
+package scripts, the base `catalog/registry.json`, any overlay catalog and prior
+rulings in `TURMA_HOME/decisions.jsonl`. Resolve `REPO`, `STATE` and `TURMA_HOME` with
+the runtime helper. Read any existing `STATE/turma-manifest.json`.
 
 ## Steps
 
-1. **Read the scope.** If `$scope` is a path, read it (the directory's `README.md`,
-   `CLAUDE.md`, `package.json`, `scripts/` too, if they exist). Identify: what the project
-   produces, what its source of truth is, what it generates, what its guard command is or
-   should be, and what stack it runs on.
+1. **Ground the setup.** Identify what the project produces, its source of truth,
+   generated outputs, stack and actual guard command. Do not invent a runnable guard.
 
-2. **Select blocks.** From the base and overlay registries, choose the hooks, patterns
-   and settings fragments that fit. Apply prior `decisions.jsonl`: an `accepted` decision
-   for a similar scope is a default yes; a `rejected` one is a default no. Every repo gets
-   `claude-md/house-rule`, `claude-md/workflow`, `settings/deny-env-reads`,
-   `settings/hook-wiring`, `hook/commit-queue`, `hook/optimizer-nudge`,
-   `hook/after-commit-nudge`. A Next.js repo also gets `hook/no-build-over-dev-server`.
-   A repo that generates a document gets a `<repo>-render-verifier` from
-   `patterns/agent-render-verifier.md`. And so on.
+2. **Select blocks for each target.** Respect a block's `hosts` list; an absent list
+   means shared. Apply relevant prior accepted/deferred/rejected decisions.
+   - Shared defaults: `claude-md/house-rule`, `claude-md/workflow`,
+     `hook/turma-paths`, `hook/commit-queue`, `hook/after-commit-nudge`,
+     `hook/optimizer-nudge`. The historical `claude-md/*` IDs are retained for
+     decision-log compatibility; their files now live in `catalog/instructions/`
+     and serve both hosts.
+   - Claude defaults: `settings/deny-env-reads`, `settings/hook-wiring`.
+   - Codex default: `settings/codex-hook-wiring`.
+   - Next.js: `hook/no-build-over-dev-server` and each target's
+     `settings/claude-build-guard` or `settings/codex-build-guard`.
+   - Claude's outside-repo read hook is opt-in only. Pair
+     `hook/no-read-outside-repo` with `settings/hook-wiring-read-guard`.
+     Do not install that rule or Claude permission keys for Codex. State the
+     limitation from the runtime conventions if the user asks for equivalent coverage.
+   - Select other patterns only when grounded in the repo's actual files and commands.
 
-   `hook/no-read-outside-repo` is opt-in, not a default - offer it when the user asks
-   for it or names the concern (auto mode reading outside the repo). If selected, also
-   select `settings/hook-wiring-read-guard` alongside `settings/hook-wiring`; the two
-   travel together, or `settings.json` points at a hook script that was never copied in.
+3. **Present the provisioning report.** Show each block, its grounds, target host(s),
+   exact destination and any unresolved prerequisites. Include a missing `jq`, `bash`
+   or `lsof` dependency needed by selected hooks. Defer blocks that cannot be grounded.
+   Honor earlier approval of this concrete scope; otherwise wait for approval of the
+   report before writing. A request to support both hosts does not authorize changing
+   user-level sandbox policy or marking Codex hooks trusted.
 
-3. **Write the provisioning report.** A table: block, why it fits this repo, the real
-   file or command it is grounded in, and where it lands (user level if shared, `.claude/`
-   if repo-specific). Flag anything you could not ground in a real file - do not ship it,
-   list it as deferred with the trigger that unblocks it. Note any new pattern the
-   catalog does not have yet.
+4. **Scaffold the approved setup.**
+   - Initialize Git if needed. Resolve the Git root again and create `STATE`.
+   - Copy `turma-paths.sh` and selected hooks verbatim into `STATE/hooks/`.
+     Mark executable scripts executable. Always include the helper beside the hooks.
+   - Install one Git `post-commit` call to the copied `commit-queue.sh`. Find the
+     effective path with `git rev-parse --git-path hooks/post-commit`, respecting
+     `core.hooksPath`. Preserve an existing hook and its behavior. Inspect for an
+     existing Turma call or an older inline Turma queue script and update that
+     installation; never append a second Turma queue writer. The queue script must
+     run from `STATE/hooks/` so its sibling helper exists. A shared external hook
+     directory requires a per-repository dispatch, not a hard-coded project path.
+   - Run `node <plugin>/scripts/render-hooks.mjs --host <claude|codex>
+     --state-dir <.turma|.claude>` to render correctly quoted commands from
+     the catalog. Add `--next` for the build guard, `--read-guard` for Claude's
+     optional read guard. Run once per target for `both`. Merge Claude fragments into
+     `.claude/settings.json`; merge Codex fragments into `.codex/hooks.json`.
+     Omit catalog `_comment` fields. Merge event lists and deduplicate Turma hooks;
+     preserve unrelated entries. Replace older Turma hook commands rather than
+     leaving both old and new paths active. Do not copy `permissions` to Codex.
+   - Assemble selected `catalog/instructions/` fragments for the target's instruction
+     file. Fill `<GUARD_COMMAND>` and layout slots from real files. Translate workflow
+     commands using the runtime conventions. Merge with existing instructions after
+     reading them. For `both`, keep common policy in `AGENTS.md`, and make `CLAUDE.md`
+     refer to `@AGENTS.md`, retaining any existing Claude-specific instructions.
+     Do not create a circular include or duplicate the common policy in both files.
+   - Fill agent/skill patterns from actual files and write them to the runtime table's
+     target locations. For Codex agent patterns, use a skill with the shared procedure
+     and omit Claude tool metadata. For explicit-only skills, add the Codex invocation
+     policy. For `both`, keep each procedure body in one repo-owned reference and
+     generate thin host entrypoints pointing at it.
+   - Shared reusable additions belong under `TURMA_HOME/catalog/` plus its registry;
+     host user-level entrypoints follow the runtime table. Project-specific additions
+     stay in the target repo. Never write new blocks into the installed plugin cache.
+   - Add the resolved queue and review-state paths to `.gitignore`, relative to `REPO`.
+   - Merge `STATE/turma-manifest.json`: `catalogVersion`, `generatedAt`, `hosts`,
+     `blocks` (IDs), and `files` mapping relative paths to `{sha256, kind, source}`.
+     Preserve `githubProject`, previously installed hosts and unrelated fields.
+     Track only verbatim copies for drift; note repo-owned instructions, substituted
+     settings, filled patterns and Git hook wrappers under `note`. `source` is a path
+     relative to the plugin root. One manifest serves both hosts.
+   - Append a ruling for each accepted, deferred or rejected block to
+     `TURMA_HOME/decisions.jsonl`: `{ts, source:"bootstrap", repo, proposal,
+     disposition, block, hosts}`. Create the directory if needed; never rewrite history.
 
-4. **Wait for approval.** Do not write anything until the user rules on the report.
-
-5. **On approval, scaffold:**
-   - If the target is not a git repo yet, `git init` it (the post-commit hook and the
-     optimizer loop need one). Add a `.gitignore` if there is none.
-   - `<repo>/.claude/settings.json` - merge `settings/deny-env-reads.json`,
-     `settings/hook-wiring.json`, and `settings/hook-wiring-read-guard.json` if
-     `hook/no-read-outside-repo` was selected (deep-merge into any existing file; do
-     not clobber).
-   - `<repo>/.claude/hooks/` - copy each selected catalog `hooks/*.sh` verbatim,
-     `chmod +x`.
-   - `<repo>/.git/hooks/post-commit` - install catalog `hooks/commit-queue.sh`. If one
-     exists, append a call to it instead of overwriting. Respect `core.hooksPath`.
-   - `<repo>/CLAUDE.md` - assemble from the selected catalog `claude-md/*` fragments,
-     substituting `<GUARD_COMMAND>` and filling the layout section from the real tree.
-   - Repo-specific agents/skills - fill the chosen `patterns/*` skeleton from the repo's
-     real files, write to `<repo>/.claude/agents/` or `<repo>/.claude/skills/`.
-   - Blocks shared across this user's repos - a new catalog block goes under
-     `TURMA_HOME/catalog/` with an entry in `TURMA_HOME/catalog/registry.json` (same
-     shape as the base registry, `grounds` naming a real need); a new shared agent or
-     skill goes in `~/.claude/agents/` or `~/.claude/skills/`. Nothing shared is ever
-     written into the plugin.
-   - `<repo>/.gitignore` - add `.claude/optimizer-queue.log` and
-     `.claude/optimizer-state.json`.
-   - `<repo>/.claude/turma-manifest.json` - `{ "catalogVersion", "generatedAt",
-     "blocks": [ids], "files": { "<relpath>": { "sha256", "kind", "source" } } }`. Track
-     only files copied verbatim from the catalog; a bootstrap-seeded but repo-owned file
-     (CLAUDE.md, settings.json) is noted in `note`, not tracked for drift.
-   - Append one line to `TURMA_HOME/decisions.jsonl` (create the directory and file if
-     missing) per block **ruled on** - `accepted`, `deferred` and `rejected` alike, plus
-     any new pattern the catalog lacks:
-     `{"ts","source":"bootstrap","repo":"<name>","proposal","disposition","block"}`.
-     Append only; never rewrite a line.
-
-6. **Print the finish steps:** commit, create the GitHub repo if the user wants one
-   (`gh repo create <name> --source=. --remote=origin --private --push` - print it, do
-   not run it), then `/turma:design` for the first architecture.
+5. **Report the result.** Name the installed hosts, state location, guard and deferred
+   blocks. For Codex, tell the user to review the generated hooks in `/hooks` in a
+   trusted project before expecting reminders or guards. Do not claim they are active
+   without runtime verification. Print commit and optional `gh repo create` steps
+   (do not create the remote yourself), then the active host's `design` invocation.
 
 ## Rules
 
-- Ground every recommendation in a named file or command. An ungrounded block is deferred,
-  not shipped.
-- Prefer an existing catalog block over a new one; prefer a shared block over a local one.
-- Never overwrite a file you did not read first. Merge settings, do not replace them.
-- Never write into `${CLAUDE_PLUGIN_ROOT}`.
+- Never overwrite a file you did not read first. Merge configuration, not replacement.
+- Re-running bootstrap must not duplicate queue writers, hook handlers or common policy.
+- Keep existing state in place when adding another host; never silently combine logs.
+- Prefer existing catalog blocks and shared procedures over duplicate definitions.

@@ -12,7 +12,7 @@ allowed-tools: Bash(<BUILD COMMANDS>) Bash(git diff *) Bash(git status *)
 
 Run each generator, then show the diff:
 
-```!
+```bash
 <BUILD COMMAND 1>
 <BUILD COMMAND 2>
 git status --short

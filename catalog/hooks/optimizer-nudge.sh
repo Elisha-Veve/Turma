@@ -1,19 +1,25 @@
 #!/usr/bin/env bash
-# SessionEnd hook. Installed by turma:bootstrap via the settings/hook-wiring fragment.
-#
-# turma:optimize runs on demand, so a backlog is easy to forget. On the way out of
-# a session, if commits sit unreviewed in the queue, a desktop notification names
-# the count. Silent when the queue is empty.
+# SessionEnd advisory notification. Shared by Claude Code and Codex.
 set -uo pipefail
-
-dir="${CLAUDE_PROJECT_DIR:-$PWD}/.claude"
+source "$(dirname "${BASH_SOURCE[0]}")/turma-paths.sh"
+payload=$(cat)
+root=$(turma_root "$(printf '%s' "$payload" | jq -r '.cwd // empty' 2>/dev/null)")
+dir=$(turma_state_dir "$root")
 queue="$dir/optimizer-queue.log"
 [ -f "$queue" ] || exit 0
-
-pending=$(grep -c . "$queue" 2>/dev/null || echo 0)
-[ "${pending:-0}" -gt 0 ] 2>/dev/null || exit 0
-
-repo=$(basename "${CLAUDE_PROJECT_DIR:-$PWD}")
-plural=s; [ "$pending" -eq 1 ] && plural=''
-osascript -e "display notification \"$pending commit$plural not yet seen by turma:optimize. Run /turma:optimize.\" with title \"Turma - $repo\"" >/dev/null 2>&1 || true
+pending=$(awk 'NF { n++ } END { print n+0 }' "$queue")
+[ "$pending" -gt 0 ] || exit 0
+message="$pending commit(s) await review. Ask to run Turma optimize."
+# Use arguments, not repository names interpolated into AppleScript source.
+if command -v osascript >/dev/null 2>&1; then
+  osascript - "$message" <<'APPLESCRIPT' >/dev/null 2>&1 || true
+on run argv
+  display notification (item 1 of argv) with title "Turma"
+end run
+APPLESCRIPT
+elif command -v notify-send >/dev/null 2>&1; then
+  notify-send Turma "$message" >/dev/null 2>&1 || true
+else
+  printf '%s\n' "$message" >&2
+fi
 exit 0

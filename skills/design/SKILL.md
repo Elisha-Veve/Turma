@@ -1,11 +1,12 @@
 ---
 name: design
 description: Turn an expanded problem statement into a system design - ADRs numbered from what already exists in docs/decisions/, and a topic doc under docs/ - and hold it for approval before anything downstream depends on it.
-disable-model-invocation: true
-arguments: [problem]
 ---
 
 # turma:design
+
+First read [runtime conventions](../../references/runtime.md) and resolve the project
+and state paths. Preserve the user's existing authorization and constraints.
 
 Read `$problem` (a path such as `docs/problems/<slug>.md`, a slug to resolve under
 that directory, or nothing - meaning the repo's `README.md` from `/turma:init`, for the
@@ -14,18 +15,13 @@ decisions that carry real consequences, and a topic doc for the shape of the cha
 This is gate #1 - nothing here is `accepted` until you say so, and `turma:tickets`
 refuses to build on anything still `proposed`.
 
-`${CLAUDE_PLUGIN_ROOT}/catalog/doc-templates/adr.md` and `design-doc.md` are the templates
+`catalog/doc-templates/adr.md` and `design-doc.md` are the templates
 this skill fills. The design itself belongs to this repo - never write it into the plugin directory.
 
 ## Context
 
-```!
-T="${CLAUDE_PLUGIN_ROOT}/catalog/doc-templates"
-echo "ADR template:"; cat "$T/adr.md"
-echo; echo "Design-doc template:"; cat "$T/design-doc.md"
-echo; echo "Existing ADRs:"; ls -1 docs/decisions 2>/dev/null || echo "(none yet - this repo's first)"
-echo; echo "Existing topic docs:"; ls -1 docs/*.md 2>/dev/null || echo "(none yet)"
-```
+Read `catalog/doc-templates/adr.md` and `design-doc.md`; list the target repository's
+existing `docs/decisions/` and topic documents under `docs/`.
 
 ## Steps
 

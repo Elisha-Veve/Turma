@@ -1,11 +1,12 @@
 ---
 name: tickets
 description: Break an approved system design into GitHub Issues on this repo's GitHub Project board, each one grounded in the design section it implements, and hold the whole batch for approval before anything is created on GitHub.
-disable-model-invocation: true
-arguments: [design]
 ---
 
 # turma:tickets
+
+First read [runtime conventions](../../references/runtime.md) and resolve the project
+and state paths. Preserve the user's existing authorization and constraints.
 
 Read `$design` - the topic doc and/or ADRs `turma:design` produced (a path, or enough
 of a description to find them under `docs/`) - and turn it into GitHub Issues on this
@@ -13,27 +14,16 @@ repo's Project board. This is gate #2: every `gh` command that creates or change
 something on GitHub is listed in a report first, and none of them runs before you
 approve it.
 
-`${CLAUDE_PLUGIN_ROOT}/catalog/doc-templates/github-issue-body.md` is the only template
+`catalog/doc-templates/github-issue-body.md` is the only template
 this skill uses. The issues, labels and Project themselves belong to this repo, on
 GitHub - Turma keeps no ticket log of its own. Use `gh ...  --jq '...'` (the flag `gh` ships, not a piped
 external `jq`) so this works without assuming `jq` is installed.
 
 ## Context
 
-```!
-echo "Issue-body template:"; cat "${CLAUDE_PLUGIN_ROOT}/catalog/doc-templates/github-issue-body.md"
-echo; echo "Remote:"; git remote get-url origin 2>&1
-echo; echo "Auth:"; gh auth status 2>&1
-OWNER=$(gh repo view --json owner --jq .owner.login 2>/dev/null)
-REPO=$(gh repo view --json name --jq .name 2>/dev/null)
-BRANCH=$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name 2>/dev/null)
-echo; echo "Owner/repo/default branch: $OWNER/$REPO @ $BRANCH"
-echo; echo "Existing project titled like this repo:"
-gh project list --owner "$OWNER" --format json --jq ".projects[] | select(.title==\"$REPO\")" 2>&1
-echo; echo "Labels:"; gh label list 2>&1
-echo; echo "Recorded project pointer:"
-cat .claude/turma-manifest.json 2>/dev/null | grep -A5 githubProject || echo "(none recorded)"
-```
+Read `catalog/doc-templates/github-issue-body.md`. Inspect the GitHub remote, `gh auth
+status`, repository owner/name/default branch, labels and Projects using `gh` JSON
+output. Read `STATE/turma-manifest.json` for an existing `githubProject` pointer.
 
 ## Steps
 
@@ -55,7 +45,7 @@ cat .claude/turma-manifest.json 2>/dev/null | grep -A5 githubProject || echo "(n
    `gh auth refresh -s project` and stop.
 
 5. **Find or plan the Project.** One Project per repo, titled exactly `<repo>`. If
-   `.claude/turma-manifest.json` names one, confirm it still resolves (`gh project view
+   `STATE/turma-manifest.json` names one, confirm it still resolves (`gh project view
    <number> --owner <owner>`); if not, or none is recorded, check `gh project list
    --owner <owner>` for a title match. If truly none exists, the report proposes
    creating one (`gh project create --owner <owner> --title "<repo>"`, then `gh project
@@ -97,7 +87,7 @@ cat .claude/turma-manifest.json 2>/dev/null | grep -A5 githubProject || echo "(n
     URL, then `gh project item-add <number> --owner <owner> --url <issue-url>`.
 
 11. **Record the Project pointer.** Merge `{"githubProject": {"owner", "number",
-    "title", "url"}}` into `.claude/turma-manifest.json` (read it first; do not clobber
+    "title", "url"}}` into `STATE/turma-manifest.json` (read it first; do not clobber
     other fields). Nothing else about the tickets is recorded locally - GitHub is the
     log.
 

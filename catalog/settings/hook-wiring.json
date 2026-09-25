@@ -5,14 +5,22 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/after-commit-nudge.sh", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "bash <HOOK_DIR_SHELL>/after-commit-nudge.sh",
+            "timeout": 10
+          }
         ]
       }
     ],
     "SessionEnd": [
       {
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/optimizer-nudge.sh", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "bash <HOOK_DIR_SHELL>/optimizer-nudge.sh",
+            "timeout": 10
+          }
         ]
       }
     ]

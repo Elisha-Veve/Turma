@@ -1,13 +1,13 @@
 {
   "_comment": "The entered-once index of the base catalog shipped with the plugin. Every file under catalog/ (bar this one) is listed here exactly once, with the real need it answers. turma:bootstrap selects from this list; scripts/check.mjs proves the list and the directory agree. A user's own additions live in an overlay catalog under TURMA_HOME, never here. catalogVersion tracks plugin.json version - any change here is a plugin change.",
-  "catalogVersion": "0.5.2",
+  "catalogVersion": "0.6.0",
   "blocks": [
     {
       "id": "hook/commit-queue",
       "kind": "hook",
       "install": "git-post-commit",
       "file": "hooks/commit-queue.sh",
-      "grounds": "Every commit, by a person or by Claude, must be visible to turma:optimize. git's post-commit hook is the only trigger that catches both; a Claude Code hook only sees commits Claude makes.",
+      "grounds": "Every commit by a person, Claude Code or Codex must reach the same optimizer queue; Git post-commit catches all three.",
       "repos": [
         "*"
       ]
@@ -27,7 +27,7 @@
       "kind": "hook",
       "install": "PostToolUse:Bash",
       "file": "hooks/after-commit-nudge.sh",
-      "grounds": "After Claude commits, a one-line reminder that the queue grew and turma:optimize is the thing to run keeps the loop visible without running analysis mid-flow.",
+      "grounds": "After either assistant commits, a reminder that the queue grew keeps the optimizer visible without running a review mid-task.",
       "repos": [
         "*"
       ]
@@ -38,7 +38,10 @@
       "install": "PreToolUse:Read|Grep|Glob",
       "file": "hooks/no-read-outside-repo.sh",
       "grounds": "In accept-edits / auto mode Claude reads files outside the repo with no prompt. This blocks an outside-repo Read/Grep/Glob (allow list: the repo, TURMA_HOME, ~/.claude, scratch dirs, TURMA_READ_ALLOW). Opt-in, not a default - it also denies reads a user may want (a sibling repo, a shared library) and needs settings/hook-wiring-read-guard installed alongside it.",
-      "repos": []
+      "repos": [],
+      "hosts": [
+        "claude"
+      ]
     },
     {
       "id": "hook/no-build-over-dev-server",
@@ -94,32 +97,32 @@
     },
     {
       "id": "claude-md/house-rule",
-      "kind": "claude-md",
-      "file": "claude-md/house-rule.md",
-      "grounds": "The rule Turma is built to defend, stated once so each CLAUDE.md carries the same words.",
+      "kind": "instructions",
+      "file": "instructions/house-rule.md",
+      "grounds": "The rule Turma is built to defend, stated once so each project instructions carries the same words.",
       "repos": [
         "*"
       ]
     },
     {
       "id": "claude-md/style-no-marketing",
-      "kind": "claude-md",
-      "file": "claude-md/style-no-marketing.md",
+      "kind": "instructions",
+      "file": "instructions/style-no-marketing.md",
       "grounds": "A description rule worth reusing wherever prose ships to a reader: one sentence, no marketing words, do not start with the subject's own name.",
       "repos": []
     },
     {
       "id": "claude-md/style-no-em-dash",
-      "kind": "claude-md",
-      "file": "claude-md/style-no-em-dash.md",
+      "kind": "instructions",
+      "file": "instructions/style-no-em-dash.md",
       "grounds": "A repo-wide typographic rule is cheap to state and annoying to retrofit; this states one (no em dashes).",
       "repos": []
     },
     {
       "id": "claude-md/layout-section",
-      "kind": "claude-md",
-      "file": "claude-md/layout-section.md",
-      "grounds": "A CLAUDE.md is more useful with a map of the tree and the common tasks; this is the skeleton for that section.",
+      "kind": "instructions",
+      "file": "instructions/layout-section.md",
+      "grounds": "A project instructions is more useful with a map of the tree and the common tasks; this is the skeleton for that section.",
       "repos": [
         "*"
       ]
@@ -131,6 +134,9 @@
       "grounds": "A secret in .env or .env.local should never land in context. Every repo with local secrets wants this deny list.",
       "repos": [
         "*"
+      ],
+      "hosts": [
+        "claude"
       ]
     },
     {
@@ -140,6 +146,9 @@
       "grounds": "The settings.json fragment that wires the two optimizer-loop nudges: the SessionEnd nudge and the after-commit context nudge. Merged into a repo's settings by the bootstrap.",
       "repos": [
         "*"
+      ],
+      "hosts": [
+        "claude"
       ]
     },
     {
@@ -147,6 +156,16 @@
       "kind": "settings",
       "file": "settings/hook-wiring-read-guard.json",
       "grounds": "The PreToolUse wiring for hook/no-read-outside-repo, kept separate from settings/hook-wiring so a repo without that hook never gets a settings.json entry pointing at a script it doesn't have. Merged only when hook/no-read-outside-repo is installed.",
+      "repos": [],
+      "hosts": [
+        "claude"
+      ]
+    },
+    {
+      "id": "doc-template/inbox",
+      "kind": "doc-template",
+      "file": "doc-templates/inbox.md",
+      "grounds": "turma:inbox needs one shape for docs/inbox.md so captured issues read the same in every repo and turma:define can find and remove the item it promotes.",
       "repos": []
     },
     {
@@ -179,9 +198,9 @@
     },
     {
       "id": "claude-md/workflow",
-      "kind": "claude-md",
-      "file": "claude-md/workflow.md",
-      "grounds": "Every repo can run problem -> design -> tickets -> work; a CLAUDE.md that never mentions the loop leaves it undiscoverable to a fresh Claude Code session.",
+      "kind": "instructions",
+      "file": "instructions/workflow.md",
+      "grounds": "Every repo can run problem -> design -> tickets -> work; a project instructions that never mentions the loop leaves it undiscoverable to a fresh assistant session.",
       "repos": [
         "*"
       ]
@@ -192,6 +211,51 @@
       "file": "doc-templates/project-readme.md",
       "grounds": "turma:init needs one shape for a new repo README so turma:bootstrap and turma:design read the same section names (what it produces, source of truth, generated, stack, guard) in every project.",
       "repos": []
+    },
+    {
+      "id": "hook/turma-paths",
+      "kind": "hook",
+      "file": "hooks/turma-paths.sh",
+      "grounds": "Git hooks, both assistant runtimes and the checker must resolve the same project and user state, including existing Claude installations.",
+      "repos": [
+        "*"
+      ]
+    },
+    {
+      "id": "settings/codex-hook-wiring",
+      "kind": "settings",
+      "file": "settings/codex-hook-wiring.json",
+      "hosts": [
+        "codex"
+      ],
+      "grounds": "Codex reads hooks.json rather than Claude settings.json; this wires the shared optimizer reminders with the supported session-end timeout.",
+      "repos": [
+        "*"
+      ]
+    },
+    {
+      "id": "settings/claude-build-guard",
+      "kind": "settings",
+      "file": "settings/claude-build-guard.json",
+      "hosts": [
+        "claude"
+      ],
+      "grounds": "Selecting the Next.js build guard must also wire PreToolUse so the copied shell script actually runs in Claude Code.",
+      "repos": [
+        "next"
+      ]
+    },
+    {
+      "id": "settings/codex-build-guard",
+      "kind": "settings",
+      "file": "settings/codex-build-guard.json",
+      "hosts": [
+        "codex"
+      ],
+      "grounds": "Selecting the Next.js build guard must also wire PreToolUse in Codex hooks.json to prevent builds over a listening dev server.",
+      "repos": [
+        "next"
+      ]
     }
   ]
 }

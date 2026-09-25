@@ -18,10 +18,13 @@
 #   port, including a client connection left behind after the server has gone.
 #   -sTCP:LISTEN asks the question actually meant.
 #
-# Ports: TURMA_DEV_PORTS ("3210 3211"), else the ports in .claude/launch.json, else 3000.
+# Ports: TURMA_DEV_PORTS, then STATE/launch.json, legacy .claude/launch.json, then 3000.
 set -uo pipefail
 
-cmd=$(jq -r '.tool_input.command // ""' 2>/dev/null) || exit 0
+source "$(dirname "${BASH_SOURCE[0]}")/turma-paths.sh"
+payload=$(cat)
+root=$(turma_root "$(printf '%s' "$payload" | jq -r '.cwd // empty')")
+cmd=$(printf '%s' "$payload" | jq -r '.tool_input.command // .tool_input.cmd // ""') || exit 0
 [ -n "$cmd" ] || exit 0
 
 stripped=$(printf '%s\n' "$cmd" | awk '
@@ -41,15 +44,17 @@ then
 fi
 
 ports="${TURMA_DEV_PORTS:-}"
-if [ -z "$ports" ] && [ -f "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/launch.json" ]; then
-  ports=$(jq -r '[.configurations[]?.port // empty] | join(" ")' \
-    < "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/launch.json" 2>/dev/null || echo '')
-fi
+for launch in "$(turma_state_dir "$root")/launch.json" "$root/.claude/launch.json"; do
+  if [ -z "$ports" ] && [ -f "$launch" ]; then
+    ports=$(jq -r '[.configurations[]?.port // empty] | join(" ")' < "$launch")
+  fi
+done
 [ -n "$ports" ] || ports=3000
 
 for port in $ports; do
   if lsof -ti "tcp:$port" -sTCP:LISTEN >/dev/null 2>&1; then
-    printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"A dev server is listening on %s. Building or clearing .next underneath it leaves the running server serving a half-written build, and every route 500s with \\"Cannot find module\\". Stop the dev server first, then build."}}' "$port"
+    jq -n --arg reason "A dev server is listening on $port. Stop it before building or clearing .next; changing its build files breaks the running server." \
+      '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"deny",permissionDecisionReason:$reason}}'
     exit 0
   fi
 done

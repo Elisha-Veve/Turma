@@ -1,0 +1,21 @@
+{
+  "name": "turma",
+  "version": "0.6.0",
+  "description": "Plan projects, provision Claude Code or Codex, approve designs, create GitHub tickets, and implement them with a shared tooling feedback loop.",
+  "author": {
+    "name": "Elisha Elorm Kwesi Amenuveve"
+  },
+  "license": "MIT",
+  "keywords": [
+    "planning",
+    "adr",
+    "github-projects",
+    "tickets",
+    "bootstrap",
+    "optimizer",
+    "hooks",
+    "skills",
+    "agents"
+  ],
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
+}

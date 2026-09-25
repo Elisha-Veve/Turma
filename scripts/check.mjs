@@ -6,19 +6,20 @@
 //   node scripts/check.mjs
 //   TURMA_REPOS=/path/a:/path/b node scripts/check.mjs     # also verify those repos
 //
-// TURMA_HOME (default ~/.claude/turma) holds the user's decisions.jsonl and an optional
+// TURMA_HOME (resolved by turma-paths.sh) holds decisions.jsonl and an optional
 // overlay catalog. The decision log is append-only; since it is not in git, the guard
 // keeps a ratchet (.decisions.ratchet) of the line count and a hash of those lines and
 // fails if an earlier line is rewritten or dropped.
 
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { homedir } from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative, resolve } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const HOME = process.env.TURMA_HOME || join(homedir(), '.claude', 'turma');
+const paths = (...args) => execFileSync('bash', [join(ROOT, 'catalog/hooks/turma-paths.sh'), ...args], { encoding: 'utf8' }).trim();
+const turmaHome = paths('home');
 const failures = [];
 const fail = (m) => failures.push(m);
 
@@ -40,6 +41,7 @@ function checkCatalog(label, catalogDir) {
   }
   (function walk(dir) {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (e.name === '.DS_Store') continue;
       const full = join(dir, e.name);
       if (e.isDirectory()) walk(full);
       else {
@@ -53,22 +55,59 @@ function checkCatalog(label, catalogDir) {
 }
 
 const registry = checkCatalog('base catalog', join(ROOT, 'catalog'));
-if (existsSync(join(HOME, 'catalog', 'registry.json'))) checkCatalog('overlay catalog', join(HOME, 'catalog'));
+if (existsSync(join(turmaHome, 'catalog', 'registry.json'))) checkCatalog('overlay catalog', join(turmaHome, 'catalog'));
 
 // 2. catalogVersion tracks plugin.json version
-const plugin = JSON.parse(readFileSync(join(ROOT, '.claude-plugin/plugin.json'), 'utf8'));
+const plugin = JSON.parse(readFileSync(join(ROOT, 'plugin.json'), 'utf8'));
 if (registry && registry.catalogVersion !== plugin.version) {
   fail(`registry.catalogVersion (${registry.catalogVersion}) != plugin.json version (${plugin.version})`);
 }
+try {
+  execFileSync(process.execPath, [join(ROOT, 'scripts/build-plugin.mjs'), '--check'], { stdio: 'pipe' });
+} catch {
+  fail('Host manifests or catalog version are stale - run: node scripts/build-plugin.mjs');
+}
+// Claude's explicit skill-path selection relies on this being a root-source install.
+const marketplace = JSON.parse(readFileSync(join(ROOT, '.claude-plugin/marketplace.json'), 'utf8'));
+if (marketplace.plugins?.find((entry) => entry.name === plugin.name)?.source !== './') {
+  fail('Claude entrypoints require the marketplace plugin source to remain ./');
+}
+
+// Both hosts load the same skills; every shared resource must ship in the package.
+for (const entry of readdirSync(join(ROOT, 'skills'), { withFileTypes: true })) {
+  if (!entry.isDirectory()) continue;
+  const dir = join(ROOT, 'skills', entry.name);
+  const text = readFileSync(join(dir, 'SKILL.md'), 'utf8');
+  if (!text.includes('../../references/runtime.md')) fail(`${entry.name}: missing shared runtime reference`);
+  if (text.includes('```!') || text.includes('${CLAUDE_PLUGIN_ROOT}')) fail(`${entry.name}: host-specific context remains`);
+  if (!existsSync(join(dir, 'agents/openai.yaml'))) fail(`${entry.name}: missing Codex invocation policy`);
+  for (const match of text.matchAll(/\]\(([^)]+\.md)\)/g)) {
+    if (!match[1].startsWith('https:') && !existsSync(resolve(dir, match[1]))) fail(`${entry.name}: missing reference ${match[1]}`);
+  }
+}
+
+// Hook selections must have a real shared script, and hosts must stay separate.
+for (const block of registry?.blocks || []) {
+  if (block.kind !== 'settings') continue;
+  const settings = JSON.parse(readFileSync(join(ROOT, 'catalog', block.file), 'utf8'));
+  if (block.hosts?.includes('codex') && settings.permissions) fail(`${block.id}: Claude permissions in Codex settings`);
+  for (const [event, groups] of Object.entries(settings.hooks || {})) {
+    for (const group of groups) for (const hook of group.hooks) {
+      const script = hook.command.match(/^bash <HOOK_DIR_SHELL>\/([\w-]+\.sh)$/)?.[1];
+      if (!script || !existsSync(join(ROOT, 'catalog/hooks', script))) fail(`${block.id}: missing or invalid hook command`);
+      if (block.hosts?.includes('codex') && event === 'SessionEnd' && hook.timeout > 3) fail(`${block.id}: Codex SessionEnd timeout exceeds 3 seconds`);
+    }
+  }
+}
 
 // 3. the user's decision log: valid JSONL, append-only against the ratchet
-const decisionsPath = join(HOME, 'decisions.jsonl');
+const decisionsPath = join(turmaHome, 'decisions.jsonl');
 if (existsSync(decisionsPath)) {
   const lines = readFileSync(decisionsPath, 'utf8').split('\n').filter((l) => l.trim());
   lines.forEach((line, i) => {
     try { JSON.parse(line); } catch { fail(`${decisionsPath} line ${i + 1} is not valid JSON`); }
   });
-  const ratchetPath = join(HOME, '.decisions.ratchet');
+  const ratchetPath = join(turmaHome, '.decisions.ratchet');
   let ok = true;
   if (existsSync(ratchetPath)) {
     try {
@@ -94,11 +133,14 @@ try {
 const repos = (process.env.TURMA_REPOS || '').split(':').filter(Boolean).map((p) => resolve(p));
 for (const repoPath of repos) {
   const name = repoPath.split('/').pop();
-  const manifestPath = join(repoPath, '.claude/turma-manifest.json');
-  if (!existsSync(manifestPath)) { fail(`${name}: no .claude/turma-manifest.json (was it bootstrapped?)`); continue; }
+  const manifestPath = join(paths('state', repoPath), 'turma-manifest.json');
+  if (!existsSync(manifestPath)) { fail(`${name}: no ${manifestPath} (was it bootstrapped?)`); continue; }
+  if (existsSync(join(repoPath, '.claude/turma-manifest.json')) && existsSync(join(repoPath, '.turma/turma-manifest.json'))) {
+    fail(`${name}: both legacy and neutral manifests exist; resolve the state conflict`);
+  }
   let manifest;
   try { manifest = JSON.parse(readFileSync(manifestPath, 'utf8')); }
-  catch { fail(`${name}/.claude/turma-manifest.json is not valid JSON`); continue; }
+  catch { fail(`${manifestPath} is not valid JSON`); continue; }
   for (const [rel, entry] of Object.entries(manifest.files || {})) {
     const recorded = typeof entry === 'string' ? entry : entry.sha256;
     const repoFile = join(repoPath, rel);
@@ -106,7 +148,8 @@ for (const repoPath of repos) {
     if (sha256(repoFile) !== recorded) fail(`${name}/${rel} was hand-edited since bootstrap (sha differs from turma-manifest.json)`);
     if (entry.source) {
       const src = join(ROOT, entry.source);
-      if (existsSync(src) && sha256(src) !== recorded) fail(`${name}/${rel} no longer matches catalog ${entry.source} - re-run /turma:bootstrap for ${name}`);
+      if (!existsSync(src)) fail(`${name}/${rel}: catalog source ${entry.source} is missing - re-run Turma bootstrap`);
+      else if (sha256(src) !== recorded) fail(`${name}/${rel} no longer matches catalog ${entry.source} - re-run Turma bootstrap for ${name}`);
     }
   }
 }

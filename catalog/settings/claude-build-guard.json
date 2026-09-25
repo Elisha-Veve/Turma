@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash <HOOK_DIR_SHELL>/no-build-over-dev-server.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

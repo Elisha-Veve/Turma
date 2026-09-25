@@ -12,7 +12,7 @@ allowed-tools: Bash(<GUARD COMMAND>) Bash(git diff *) Bash(git status *)
 
 Run the guard and read its output, not just its exit code.
 
-```!
+```bash
 <GUARD COMMAND>
 ```
 

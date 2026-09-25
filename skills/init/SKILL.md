@@ -1,11 +1,12 @@
 ---
 name: init
 description: Start a new project from an empty repo - talk through what it is, then write the README.md that turma:bootstrap and turma:design read, after you approve it.
-disable-model-invocation: true
-arguments: [idea]
 ---
 
 # turma:init
+
+First read [runtime conventions](../../references/runtime.md) and resolve the project
+and state paths. Preserve the user's existing authorization and constraints.
 
 The first step of a new project. Have a discussion about what `$idea` is - a sentence, a
 paragraph, or nothing at all - and turn it into the repo's `README.md`. That README is
@@ -14,18 +15,13 @@ the project-level scope: `turma:bootstrap` reads it to provision the repo, and
 approve the draft.
 
 The skeleton this skill fills is
-`${CLAUDE_PLUGIN_ROOT}/catalog/doc-templates/project-readme.md`. Read it from there;
+`catalog/doc-templates/project-readme.md`. Read it from there;
 nothing about this project is ever written into the plugin directory.
 
 ## Context
 
-```!
-echo "Template:"; cat "${CLAUDE_PLUGIN_ROOT}/catalog/doc-templates/project-readme.md"
-echo; echo "Directory:"; pwd
-echo; echo "Files here:"; ls -A | head -30
-echo; echo "Existing README:"; head -20 README.md 2>/dev/null || echo "(none)"
-echo; echo "Git:"; git rev-parse --show-toplevel 2>&1 | head -1
-```
+Read `catalog/doc-templates/project-readme.md`, list the target directory, read any
+existing README, and check whether the target is already a Git repository.
 
 ## Steps
 
@@ -39,7 +35,7 @@ echo; echo "Git:"; git rev-parse --show-toplevel 2>&1 | head -1
    from them and so must be generated; the stack, as far as it is decided; what is in
    scope for v1 and what is deliberately out; whether it starts single-user and what
    must not lock it there; and what a guard script would have to prove. Use plain
-   conversation for open framing; use AskUserQuestion only for a short list of concrete
+   conversation for open framing; use the host's question tool only for a short list of concrete
    options (a stack choice, single- vs multi-user). Reflect back what you heard, and
    challenge a vague answer once before accepting it. Keep going until each section
    could be written honestly - not until it is exhaustive.

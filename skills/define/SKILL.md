@@ -1,36 +1,36 @@
 ---
 name: define
-description: Turn a rough problem into a written, expanded problem statement - context, scope, success criteria - through conversation, and save it as this repo's docs/problems/<slug>.md.
-disable-model-invocation: true
-arguments: [problem]
+description: Turn a rough problem into an expanded problem statement through conversation, covering context, scope and success criteria, and save it under docs/problems/.
 ---
 
 # turma:define
+
+First read [runtime conventions](../../references/runtime.md) and resolve the project
+and state paths. Preserve the user's existing authorization and constraints.
 
 Write `docs/problems/<slug>.md` in the repo you are working in - the seed the rest of
 the loop reads from. `turma:design` reads it to produce the system design; nothing
 downstream should ever restate a fact this document already states.
 
-The skeleton this skill fills is `${CLAUDE_PLUGIN_ROOT}/catalog/doc-templates/problem-statement.md`.
+The skeleton this skill fills is `catalog/doc-templates/problem-statement.md`.
 Read it from there; never write into the plugin directory.
 
 ## Context
 
-```!
-echo "Template:"; cat "${CLAUDE_PLUGIN_ROOT}/catalog/doc-templates/problem-statement.md"
-echo; echo "Existing problem docs:"; ls -1 docs/problems 2>/dev/null || echo "(none yet)"
-```
+Read `catalog/doc-templates/problem-statement.md` and list existing documents under
+`docs/problems/` in the target repository.
 
 ## Steps
 
-1. **Take `$problem` as given.** It may be a sentence, a path to notes, or empty - if
-   empty, ask what prompted this before doing anything else.
+1. **Take `$problem` as given.** It may be a sentence, a path to notes, an item
+   promoted from `docs/inbox.md` by `turma:inbox`, or empty - if empty and the inbox
+   has items, offer them; otherwise ask what prompted this before doing anything else.
 
 2. **Expand it by asking, not assuming.** Work through, in conversation: who feels this
    and how often; what happens today in its absence - the actual failure, named, not "it
    would be nice if"; what "solved" looks like, concretely enough to test later; what is
    explicitly out of scope. Use plain conversation for open framing questions; use
-   AskUserQuestion only for a genuine short list of concrete options. Keep asking until
+   the host's question tool only for a genuine short list of concrete options. Keep asking until
    the problem has context, a scope line, and testable success criteria - not until it
    is exhaustive. Never guess an answer the user has not given - leave it under Open
    questions instead.
@@ -45,8 +45,9 @@ echo; echo "Existing problem docs:"; ls -1 docs/problems 2>/dev/null || echo "(n
    `turma:design` down the wrong path - do not write until the user says it is ready.
 
 6. **On approval, write the file** with `Status: expanded`. Do not commit it - that is
-   the user's call, same as any other file. Tell the user the next step is
-   `/turma:design docs/problems/<slug>.md`.
+   the user's call, same as any other file. If the problem came from `docs/inbox.md`,
+   remove that item in the same step - the problem doc now owns it. Tell the user the
+   next step is `/turma:design docs/problems/<slug>.md`.
 
 ## Rules
 

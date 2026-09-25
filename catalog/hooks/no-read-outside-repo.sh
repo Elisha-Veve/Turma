@@ -20,7 +20,8 @@
 # Known gap: a read via `cat`/`head` in a Bash call is not covered here.
 set -uo pipefail
 
-repo="${CLAUDE_PROJECT_DIR:-$PWD}"
+source "$(dirname "${BASH_SOURCE[0]}")/turma-paths.sh"
+repo=$(turma_root)
 
 p=$(jq -r '.tool_input.file_path // .tool_input.path // ""' 2>/dev/null) || exit 0
 # Grep/Glob with no path default to the repo root - nothing to check.
@@ -46,7 +47,7 @@ normalize() {
 
 target=$(normalize "$p")
 
-allow=("$repo" "$HOME/.claude" "/tmp" "/private/tmp")
+allow=("$repo" "$HOME/.claude" "$(turma_home)" "/tmp" "/private/tmp")
 [ -n "${TURMA_HOME:-}" ] && allow+=("$TURMA_HOME")
 [ -n "${TMPDIR:-}" ] && allow+=("${TMPDIR%/}")
 if [ -n "${TURMA_READ_ALLOW:-}" ]; then
@@ -62,7 +63,8 @@ for a in "${allow[@]}"; do
 done
 
 decision=deny
-[ "${TURMA_READ_OUTSIDE:-deny}" = "request" ] && decision=request
+[ "${TURMA_READ_OUTSIDE:-deny}" = "request" ] && decision=ask
 
-printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"%s","permissionDecisionReason":"%s is outside this repo. Turma repos do not read outside themselves in auto mode. If this read is needed, add its directory to TURMA_READ_ALLOW in .claude/settings.json (env), or set TURMA_READ_OUTSIDE=request to be prompted instead."}}' "$decision" "$target"
+jq -n --arg decision "$decision" --arg reason "$target is outside this repo. Add its directory to TURMA_READ_ALLOW, or set TURMA_READ_OUTSIDE=request to ask before the read." \
+  '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:$decision,permissionDecisionReason:$reason}}'
 exit 0

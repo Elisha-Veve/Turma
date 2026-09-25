@@ -1,6 +1,6 @@
 <!-- PATTERN: a skill that launches the app on its own port and captures a screenshot,
      for confirming a change in the real app rather than only in tests. Port and command
-     come from .claude/launch.json. -->
+     come from the project dev-server configuration. -->
 ---
 name: run
 description: Launch <REPO> on its dev port, drive it to <THE CHANGED SURFACE>, and capture a screenshot.

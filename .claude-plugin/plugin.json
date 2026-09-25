@@ -1,8 +1,7 @@
 {
   "name": "turma",
-  "displayName": "Turma",
-  "version": "0.5.2",
-  "description": "Start a project from a discussion, provision its Claude Code setup from a catalog, design it with approved ADRs, cut GitHub Issues on a Project board, and work them one at a time. An optimizer proposes new agents, skills and hooks from your commits.",
+  "version": "0.6.0",
+  "description": "Plan projects, provision Claude Code or Codex, approve designs, create GitHub tickets, and implement them with a shared tooling feedback loop.",
   "author": {
     "name": "Elisha Elorm Kwesi Amenuveve"
   },
@@ -17,5 +16,6 @@
     "hooks",
     "skills",
     "agents"
-  ]
+  ],
+  "skills": "./claude-skills/"
 }
