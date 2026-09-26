@@ -37,8 +37,8 @@ the runtime helper. Read any existing `STATE/turma-manifest.json`.
      `settings/claude-build-guard` or `settings/codex-build-guard`.
    - The after-commit nudge is opt-in only: it costs context on every commit, and
      the SessionEnd nudge already reports the queue. Pair `hook/after-commit-nudge`
-     with `settings/hook-wiring-commit-nudge` (Claude) or
-     `settings/codex-hook-wiring-commit-nudge` (Codex), and render with `--commit-nudge`.
+     with `settings/hook-wiring-commit-nudge` (both hosts), and render with
+     `--commit-nudge`.
    - Claude's outside-repo read hook is opt-in only. Pair
      `hook/no-read-outside-repo` with `settings/hook-wiring-read-guard`.
      Do not install that rule or Claude permission keys for Codex. State the
