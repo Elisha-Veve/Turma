@@ -27,7 +27,7 @@
       "kind": "hook",
       "install": "PostToolUse:Bash",
       "file": "hooks/after-commit-nudge.sh",
-      "grounds": "After either assistant commits, a reminder that the queue grew keeps the optimizer visible without running a review mid-task. Opt-in, not a default - it adds a line to the assistant's context on every commit, and the SessionEnd nudge already reports the queue; install it with settings/hook-wiring-commit-nudge (Claude) or settings/codex-hook-wiring-commit-nudge (Codex).",
+      "grounds": "After either assistant commits, a reminder that the queue grew keeps the optimizer visible without running a review mid-task. Opt-in, not a default - it adds a line to the assistant's context on every commit, and the SessionEnd nudge already reports the queue; install it with settings/hook-wiring-commit-nudge.",
       "repos": []
     },
     {
@@ -163,11 +163,8 @@
       "id": "settings/hook-wiring-commit-nudge",
       "kind": "settings",
       "file": "settings/hook-wiring-commit-nudge.json",
-      "grounds": "The PostToolUse wiring for hook/after-commit-nudge in Claude Code, kept separate from settings/hook-wiring so a repo without that hook never gets a settings.json entry pointing at a script it doesn't have. Merged only when hook/after-commit-nudge is installed.",
-      "repos": [],
-      "hosts": [
-        "claude"
-      ]
+      "grounds": "The PostToolUse wiring for hook/after-commit-nudge, shared by both hosts (Claude settings.json and Codex hooks.json take the same shape here), kept separate from the base wiring so a repo without that hook never gets an entry pointing at a script it doesn't have. Merged only when hook/after-commit-nudge is installed.",
+      "repos": []
     },
     {
       "id": "doc-template/inbox",
@@ -240,16 +237,6 @@
       "repos": [
         "*"
       ]
-    },
-    {
-      "id": "settings/codex-hook-wiring-commit-nudge",
-      "kind": "settings",
-      "file": "settings/codex-hook-wiring-commit-nudge.json",
-      "hosts": [
-        "codex"
-      ],
-      "grounds": "The PostToolUse wiring for hook/after-commit-nudge in Codex's hooks.json. Merged only when hook/after-commit-nudge is installed.",
-      "repos": []
     },
     {
       "id": "settings/claude-build-guard",

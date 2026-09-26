@@ -14,7 +14,7 @@ export function renderHooks({ host, stateDir, next = false, readGuard = false, c
   const fragments = [host === 'claude' ? 'hook-wiring' : 'codex-hook-wiring'];
   if (next) fragments.push(`${host}-build-guard`);
   if (readGuard) fragments.push('hook-wiring-read-guard');
-  if (commitNudge) fragments.push(host === 'claude' ? 'hook-wiring-commit-nudge' : 'codex-hook-wiring-commit-nudge');
+  if (commitNudge) fragments.push('hook-wiring-commit-nudge');
   const result = { hooks: {} };
   for (const name of fragments) {
     const { hooks } = JSON.parse(readFileSync(join(root, 'catalog/settings', `${name}.json`), 'utf8'));
