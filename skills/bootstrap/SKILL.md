@@ -28,14 +28,17 @@ the runtime helper. Read any existing `STATE/turma-manifest.json`.
 2. **Select blocks for each target.** Respect a block's `hosts` list; an absent list
    means shared. Apply relevant prior accepted/deferred/rejected decisions.
    - Shared defaults: `claude-md/house-rule`, `claude-md/workflow`,
-     `hook/turma-paths`, `hook/commit-queue`, `hook/after-commit-nudge`,
-     `hook/optimizer-nudge`. The historical `claude-md/*` IDs are retained for
-     decision-log compatibility; their files now live in `catalog/instructions/`
+     `hook/turma-paths`, `hook/commit-queue`, `hook/optimizer-nudge`. The historical
+     `claude-md/*` IDs are retained for decision-log compatibility; their files now live in `catalog/instructions/`
      and serve both hosts.
    - Claude defaults: `settings/deny-env-reads`, `settings/hook-wiring`.
    - Codex default: `settings/codex-hook-wiring`.
    - Next.js: `hook/no-build-over-dev-server` and each target's
      `settings/claude-build-guard` or `settings/codex-build-guard`.
+   - The after-commit nudge is opt-in only: it costs context on every commit, and
+     the SessionEnd nudge already reports the queue. Pair `hook/after-commit-nudge`
+     with `settings/hook-wiring-commit-nudge` (Claude) or
+     `settings/codex-hook-wiring-commit-nudge` (Codex), and render with `--commit-nudge`.
    - Claude's outside-repo read hook is opt-in only. Pair
      `hook/no-read-outside-repo` with `settings/hook-wiring-read-guard`.
      Do not install that rule or Claude permission keys for Codex. State the
@@ -63,7 +66,7 @@ the runtime helper. Read any existing `STATE/turma-manifest.json`.
    - Run `node <plugin>/scripts/render-hooks.mjs --host <claude|codex>
      --state-dir <.turma|.claude>` to render correctly quoted commands from
      the catalog. Add `--next` for the build guard, `--read-guard` for Claude's
-     optional read guard. Run once per target for `both`. Merge Claude fragments into
+     optional read guard, `--commit-nudge` for the optional after-commit nudge. Run once per target for `both`. Merge Claude fragments into
      `.claude/settings.json`; merge Codex fragments into `.codex/hooks.json`.
      Omit catalog `_comment` fields. Merge event lists and deduplicate Turma hooks;
      preserve unrelated entries. Replace older Turma hook commands rather than

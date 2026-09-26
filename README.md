@@ -206,12 +206,11 @@ Every commit is recorded by a Git `post-commit` hook into the shared state direc
 When it suits you, `/turma:optimize` reads the queued diffs for a checker run by hand too
 often, work redone, or the same multi-file edit repeated, and proposes what would have
 helped. You accept, defer or reject each; every ruling is logged and shapes the next
-bootstrap. A one-line nudge after each assistant commit, and a notification at session
-end when commits are unreviewed, keep the loop visible.
+bootstrap. A notification at session end when commits are unreviewed keeps the loop
+visible; a one-line nudge after each assistant commit is available as an opt-in.
 
-**The hooks** bootstrap installs for both hosts: a shared Git commit queue, a reminder
-after an assistant commit, and a session-end notification (macOS or Linux where a
-desktop notifier is available). Next.js projects also get a build-over-dev-server
+**The hooks** bootstrap installs for both hosts: a shared Git commit queue and a
+session-end notification (macOS or Linux where a desktop notifier is available). Next.js projects also get a build-over-dev-server
 guard. `TURMA_DEV_PORTS` overrides the configured development ports.
 
 Claude additionally gets its environment-file read deny list and, when requested, the

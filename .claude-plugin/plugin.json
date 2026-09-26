@@ -1,6 +1,6 @@
 {
   "name": "turma",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Plan projects, provision Claude Code or Codex, approve designs, create GitHub tickets, and implement them with a shared tooling feedback loop.",
   "author": {
     "name": "Elisha Elorm Kwesi Amenuveve"

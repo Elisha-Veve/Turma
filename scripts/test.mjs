@@ -60,7 +60,9 @@ for (const legacy of [false, true]) {
     assert.equal(queue.trim().split('\n').length, 1);
     assert.equal(queue.split('\t')[0], f.git('rev-parse', 'HEAD'));
     for (const host of ['claude', 'codex']) {
-      const config = renderHooks({ host, stateDir: basename(f.state) });
+      // The after-commit nudge is opt-in: the default wiring has no PostToolUse at all.
+      assert.equal(renderHooks({ host, stateDir: basename(f.state) }).hooks.PostToolUse, undefined);
+      const config = renderHooks({ host, stateDir: basename(f.state), commitNudge: true });
       const command = config.hooks.PostToolUse[0].hooks[0].command;
       const result = JSON.parse(f.invoke(command, { tool_name: 'Bash', tool_input: { command: 'git commit -m fixture' } }));
       assert.match(result.hookSpecificOutput.additionalContext, /1 commit\(s\)/);
