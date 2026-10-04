@@ -32,7 +32,10 @@ host's project instructions and `package.json` for the guard command.
    `Todo`. In parallel mode (below) the tickets of the user's batch are the exception:
    each is in progress in its own worktree, by design.
 
-3. **Require a clean working tree.** Stop and say so if not.
+3. **Require a clean working tree, and nothing stranded.** Stop and say so if the tree
+   is not clean. Then `git fetch` and check `git log origin/<default>..HEAD`: commits
+   there with no open PR are a work item that never got one (typically pushed to a
+   branch after its PR merged). Open a PR for them before starting the ticket.
 
 4. **Fetch the issue and its grounding.** `gh issue view $issue --json
    title,body,url,labels,state`. Its Grounds line must point at a design doc or ADR that
@@ -64,6 +67,9 @@ host's project instructions and `package.json` for the guard command.
 9. **Branch, then open a PR.** One branch per ticket. Commit, push, `gh pr create`
    with `Closes #<issue>` in the body. Move the Project item to `In Review`. Stop there
    - merging is the user's call, a checkpoint before code reaches the default branch.
+   A change made after that PR merged (a follow-up fix, a design clarification) is a
+   new work item: a fresh branch from the default branch and its own PR, never another
+   commit on the merged branch.
 
 10. **Report:** what changed, the guard's verdict, the auditor's verdict if one ran, the
     PR link, and the board state.
@@ -96,6 +102,8 @@ its own branch, based on the latest default branch.
 ## Rules
 
 - One ticket in flight, unless the user asked for parallel tickets. Check the board, not memory.
+- Every work item gets a PR - a ticket, a follow-up, a docs-only change. Nothing reaches
+  the default branch any other way, and no commit is left on a branch without one.
 - The issue is a pointer to the design, never a substitute for reading it.
 - The guard's verdict beats the auditor's and beats your own reading of the diff.
 - Never open a PR the guard has not passed against. Never merge it yourself - that is
