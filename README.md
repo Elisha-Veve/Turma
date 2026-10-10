@@ -76,6 +76,8 @@ In an empty repo folder, open your assistant, then run the workflow:
 /turma:design                           # architecture as ADRs; approve before it is accepted
 /turma:tickets docs/<topic>.md          # GitHub Issues on a Project board; approve the batch
 /turma:work                             # implement the next ticket, open a PR
+/turma:workstream <slug>                # or a whole workstream, as stacked PRs
+/turma:open                             # what is open: tickets, PRs, stranded branches
 ```
 
 Commit after `bootstrap`, and push the design before `/turma:tickets` (Turma prints the
@@ -118,14 +120,30 @@ all marked `proposed`. Read them. Ask for changes, or approve; approved ADRs bec
 **4. `/turma:tickets docs/architecture.md`**
 It checks that the design is accepted and pushed, that a remote exists and that `gh` has
 the `project` scope; if not, it stops and prints the fix. Otherwise it shows a table of
-tickets, each with a link to the design section it implements, and the exact `gh` commands
-it will run. Approve, and it creates the Issues and the Project board.
+tickets grouped into workstreams, each with a link to the design section it implements,
+and the exact `gh` commands it will run. Approve, and it creates the Issues and the
+Project board. Every ticket carries a `workstream:<slug>` label: the run of tickets it
+builds on and ships with.
 
 **5. `/turma:work`**
 It takes the lowest-numbered ticket in `Todo`, reads the ticket and the design section it
 cites, implements it, runs your guard command, opens a PR that says `Closes #N`, and stops.
 Review and merge the PR on GitHub, then run `/turma:work` again for the next ticket. Use
 `/turma:work 7` to pick one by number.
+
+A ticket's PR stacks on the open PRs of its workstream, so you do not have to merge one
+before starting the next.
+
+**6. `/turma:workstream <slug>`**
+The slug is the part of the label after `workstream:`. It works a whole workstream instead of one ticket: its tickets in order through
+`/turma:work`, one PR each, every PR stacked on the one before and carrying the
+workstream label. It does not wait for a merge between them, and stops where a guard
+fails. Merge the stack from the bottom up.
+
+**`/turma:open`**, at any point, lists every open work item: tickets grouped by
+workstream with their board status and PR, PRs that close no ticket, and branches with
+commits that never got a PR. `/turma:open <slug>` shows one workstream. It changes
+nothing.
 
 ## Review completed work
 
@@ -169,10 +187,12 @@ is logged so the next `bootstrap` starts smarter. If nothing is worth adding, it
 | `/turma:design` | `$design` | Turn an expanded problem statement into a system design - ADRs numbered from what already exists in docs/decisions/, and a topic doc under docs/ - and hold it for approval before anything downstream depends on it. |
 | `/turma:inbox` | `$inbox` | Capture rough issues into docs/inbox.md as they come up, list them, and promote one to turma:define when it is ready to become a problem statement. |
 | `/turma:init` | `$init` | Start a new project from an empty repo - talk through what it is, then write the README.md that turma:bootstrap and turma:design read, after you approve it. |
+| `/turma:open` | `$open` | Show every open work item in this repo - open tickets by workstream with their Project status and PR, open PRs with no ticket, and branches with commits that never got a PR. |
 | `/turma:optimize` | `$optimize` | Review commits since the last run and propose agents, skills or hooks that would make future work faster or safer. |
 | `/turma:review` | `$review` | Review completed work in a working tree, commit range or pull request against its requirements and report actionable defects, regressions and missing acceptance criteria. |
-| `/turma:tickets` | `$tickets` | Break an approved system design into GitHub Issues on this repo's GitHub Project board, each one grounded in the design section it implements, and hold the whole batch for approval before anything is created on GitHub. |
-| `/turma:work` | `$work` | Implement one GitHub Issue from its approved design, run the guard and any repo auditor procedure, open a PR, and update its Project status. |
+| `/turma:tickets` | `$tickets` | Break an approved system design into GitHub Issues on this repo's GitHub Project board, each one grounded in the design section it implements and labelled with its workstream, and hold the whole batch for approval before anything is created on GitHub. |
+| `/turma:work` | `$work` | Implement one GitHub Issue from its approved design, run the guard and any repo auditor procedure, open a PR stacked on its workstream's open PRs, and update its Project status. |
+| `/turma:workstream` | `$workstream` | Work every open ticket of one workstream in order through turma:work, as a stack of PRs each based on the one before. |
 <!-- /generated:skills -->
 
 ## The agent
@@ -195,7 +215,7 @@ grounded agent looks like.
 **Planning.** Every step ends in a gate. `init` writes nothing until you approve the
 README. `design` marks nothing `accepted` until you approve the ADRs. `tickets` creates
 nothing on GitHub until you approve the full list of `gh` commands. `work` opens a PR and
-stops; you merge. Each ticket cites the design section it implements by an absolute link,
+stops; you merge. `workstream` opens one stacked PR per ticket and merges none of them. Each ticket cites the design section it implements by an absolute link,
 so a ticket that cannot cite one is not created. One ticket is in flight at a time,
 checked live on the Project board.
 

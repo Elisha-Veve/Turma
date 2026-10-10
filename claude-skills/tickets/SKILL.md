@@ -1,6 +1,6 @@
 ---
 name: tickets
-description: Break an approved system design into GitHub Issues on this repo's GitHub Project board, each one grounded in the design section it implements, and hold the whole batch for approval before anything is created on GitHub.
+description: Break an approved system design into GitHub Issues on this repo's GitHub Project board, each one grounded in the design section it implements and labelled with its workstream, and hold the whole batch for approval before anything is created on GitHub.
 disable-model-invocation: true
 ---
 

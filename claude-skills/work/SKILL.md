@@ -1,6 +1,6 @@
 ---
 name: work
-description: Implement one GitHub Issue from its approved design, run the guard and any repo auditor procedure, open a PR, and update its Project status. One ticket in flight at a time.
+description: Implement one GitHub Issue from its approved design, run the guard and any repo auditor procedure, open a PR stacked on its workstream's open PRs, and update its Project status. One ticket in flight at a time.
 disable-model-invocation: true
 ---
 
