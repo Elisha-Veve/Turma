@@ -15,10 +15,18 @@ reads that README. After that, each feature runs the loop:
    Stops for approval before anything becomes a ticket.
 3. `/turma:tickets` - break the approved, pushed design into GitHub Issues on this
    repo's GitHub Project board, each one linked back to the exact design section it
-   comes from. Stops for approval before anything is created on GitHub.
+   comes from and labelled `workstream:<slug>` with the run of tickets it stacks with.
+   Stops for approval before anything is created on GitHub.
 4. `/turma:work` - implement one ticket: read it and its grounding, build it, run the
    guard, run the repo's auditor procedure where one exists, open a PR
    against the issue, update the board. One ticket in flight at a time.
+   A ticket's PR stacks on its workstream's open PRs.
+5. `/turma:workstream <slug>` - work a whole workstream: its tickets in order through
+   `/turma:work`, one PR each, every PR stacked on the one before. Merges nothing.
+
+Use `/turma:open` to see every open work item: tickets by workstream with their status
+and PR, PRs with no ticket, and branches whose commits never got a PR. It changes
+nothing.
 
 Use `/turma:review` (Codex: Turma's `$review`) to review local changes, a commit range
 or a PR against its requirements before fixing or merging. It reports findings and

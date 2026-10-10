@@ -1,6 +1,6 @@
 ---
 name: work
-description: Implement one GitHub Issue from its approved design, run the guard and any repo auditor procedure, open a PR, and update its Project status. One ticket in flight at a time.
+description: Implement one GitHub Issue from its approved design, run the guard and any repo auditor procedure, open a PR stacked on its workstream's open PRs, and update its Project status. One ticket in flight at a time.
 ---
 
 # turma:work
@@ -11,7 +11,9 @@ and state paths. Preserve the user's existing authorization and constraints.
 Implement `$issue` - an issue number, or empty to take the lowest-numbered open issue
 whose Project status is `Todo` (deterministic; a board's visual column order isn't
 something `gh` exposes reliably). One ticket in flight at a time: this skill checks the
-Project board for another item already `In Progress` before starting anything.
+Project board for another item already `In Progress` before starting anything. A
+workstream slug in place of an issue number is a request for
+[turma:workstream](../workstream/SKILL.md), which runs this skill over the whole stream.
 
 ## Context
 
@@ -64,15 +66,36 @@ host's project instructions and `package.json` for the guard command.
    The report is advisory; if it disagrees with the guard, explain the disagreement.
    If no auditor procedure exists, say so and move on; that gap is an optimizer candidate.
 
-9. **Branch, then open a PR.** One branch per ticket. Commit, push, `gh pr create`
-   with `Closes #<issue>` in the body. Move the Project item to `In Review`. Stop there
-   - merging is the user's call, a checkpoint before code reaches the default branch.
+9. **Branch, then open a PR.** One branch per ticket, from the base its workstream
+   gives it (Workstreams, below). Commit, push, `gh pr create` with `Closes #<issue>` in
+   the body. Move the Project item to `In Review`. Stop there - merging is the user's
+   call, a checkpoint before code reaches the default branch. (Under turma:workstream,
+   that skill decides whether another ticket follows; nothing is merged either way.)
    A change made after that PR merged (a follow-up fix, a design clarification) is a
    new work item: a fresh branch from the default branch and its own PR, never another
    commit on the merged branch.
 
 10. **Report:** what changed, the guard's verdict, the auditor's verdict if one ran, the
     PR link, and the board state.
+
+## Workstream tickets
+
+A workstream is the set of issues carrying one `workstream:<slug>` label; `turma:tickets`
+puts one on every ticket. Its tickets land in issue-number order and their PRs always
+stack. Read the label off the issue (step 4) - this applies to any ticket that has one,
+whether it was picked here by number or handed over by turma:workstream.
+
+- **Base.** `gh pr list --state open --label "workstream:<slug>" --json
+  number,headRefName,baseRefName`. The tip of the stack is the open PR whose head branch
+  is no other open PR's base. Branch from the tip's branch and open the PR against it
+  (`--base <tip branch>`), naming the PR it stacks on in the body. With no open PR in
+  the stream, the base is the latest default branch.
+- **Label the PR.** `gh pr create --label "workstream:<slug>"`. That label is how the
+  next ticket finds the stack; a stream PR without it breaks the stack.
+- **Order.** If `$issue` names a ticket while a lower-numbered one in its workstream is
+  still `Todo`, say so and confirm before working it out of order.
+- **When a base merges,** retarget the PR above it to the default branch (`gh pr edit
+  <n> --base <default>`) before anything else in the stream is started.
 
 ## Parallel tickets
 
@@ -88,9 +111,11 @@ its own branch, based on the latest default branch.
 - **Scratch files stay out of the worktree.** Probe scripts, browser harnesses and
   screenshots go in the session's scratch directory. Confirm a UI change with the repo's
   `run` skill (pattern/skill-launch-and-screenshot) where one exists.
-- **Stacked tickets.** A ticket that depends on an open PR branches from that PR's
-  branch and opens its PR against it (`--base <that branch>`), saying so in the body;
-  retarget it to the default branch once the base merges.
+- **One worktree per workstream.** Tickets of the same workstream stack (above), so
+  they never run in parallel with each other; a parallel batch is tickets from different
+  workstreams. A ticket that depends on an open PR outside its workstream stacks on it
+  the same way: branch from that PR's branch, `--base <that branch>`, say so in the
+  body, retarget once the base merges.
 - **The commit queue** must resolve to the main checkout (hook/turma-paths does, via
   `--git-common-dir`); otherwise every worktree commit is lost to turma:optimize.
 - **After a ticket's PR merges,** before removing its worktree: `git log
@@ -102,6 +127,8 @@ its own branch, based on the latest default branch.
 ## Rules
 
 - One ticket in flight, unless the user asked for parallel tickets. Check the board, not memory.
+- A ticket with a workstream label always stacks on its stream's open PRs, and its PR
+  carries the same label.
 - Every work item gets a PR - a ticket, a follow-up, a docs-only change. Nothing reaches
   the default branch any other way, and no commit is left on a branch without one.
 - The issue is a pointer to the design, never a substitute for reading it.

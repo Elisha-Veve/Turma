@@ -1,6 +1,6 @@
 ---
 name: tickets
-description: Break an approved system design into GitHub Issues on this repo's GitHub Project board, each one grounded in the design section it implements, and hold the whole batch for approval before anything is created on GitHub.
+description: Break an approved system design into GitHub Issues on this repo's GitHub Project board, each one grounded in the design section it implements and labelled with its workstream, and hold the whole batch for approval before anything is created on GitHub.
 ---
 
 # turma:tickets
@@ -65,34 +65,52 @@ output. Read `STATE/turma-manifest.json` for an existing `githubProject` pointer
      do not invent scope to fill the gap.
    - Scope, acceptance criteria, out of scope, and the repo's guard command.
 
-7. **Match labels to what exists.** Use only labels `gh label list` actually returned.
-   If a ticket needs one the repo lacks, the report proposes `gh label create "<name>"
-   --description "<...>" --color "<hex>"` rather than silently substituting.
+7. **Group the tickets into workstreams.** A workstream is a run of tickets that build
+   on each other and land as one stack of PRs - usually one ADR, or one implementation
+   section of a topic doc. Every ticket belongs to exactly one, a ticket that stands
+   alone included, and carries its label: `workstream:<slug>`, the slug taken from the
+   ADR or section the stream implements, never invented. Order the tickets inside each
+   workstream by what must land first: `/turma:workstream` takes a stream in issue-number
+   order and stacks each PR on the one before, so creation order is the stack order. Two
+   tickets that could ship in either order without touching each other's code belong to
+   different workstreams.
 
-8. **Write the report:** a table of every ticket - title, labels (existing vs.
+8. **Match labels to what exists.** Use only labels `gh label list` actually returned;
+   a `workstream:<slug>` label that already exists for the same design section is
+   reused, and new tickets join the end of that stream. If a ticket needs a label the
+   repo lacks - its workstream label included - the report proposes `gh label create
+   "<name>" --description "<...>" --color "<hex>"` rather than silently substituting. A
+   workstream label's description names the ADR or section it implements.
+
+9. **Write the report:** a table of every ticket, grouped by workstream and in stack
+   order - workstream label, position in the stream, title, other labels (existing vs.
    to-be-created), Grounds link - followed by the literal `gh` commands that will run,
    in order: any `gh label create`, then `gh project create`/`gh project link` if
    needed, then a `gh project field-create` if the Status field is missing (checked via
    `gh project field-list <n> --owner <o> --format json`), then one `gh issue create`
-   and one `gh project item-add` per ticket.
+   and one `gh project item-add` per ticket, workstream by workstream, each stream's
+   tickets in stack order.
 
-9. **Wait for approval.** No `gh` command that creates or edits anything on GitHub runs
+10. **Wait for approval.** No `gh` command that creates or edits anything on GitHub runs
    before this.
 
-10. **On approval, run the commands from the report, in order.** Create missing labels.
+11. **On approval, run the commands from the report, in order.** Create missing labels.
     Create/link the Project only if none was found. Create the `Status` field
     (`SINGLE_SELECT`, options `Todo,In Progress,In Review,Done`) only if missing. For
-    each ticket: write its body to a scratch file, `gh issue create --repo <owner>/<repo>
-    --title "<title>" --body-file <path> --label "<labels>"`, capture the printed issue
-    URL, then `gh project item-add <number> --owner <owner> --url <issue-url>`.
+    each ticket, one at a time so issue numbers follow stack order: write its body to a
+    scratch file, `gh issue create --repo <owner>/<repo> --title "<title>" --body-file
+    <path> --label "workstream:<slug>,<other labels>"`, capture the printed issue URL,
+    then `gh project item-add <number> --owner <owner> --url <issue-url>`.
 
-11. **Record the Project pointer.** Merge `{"githubProject": {"owner", "number",
+12. **Record the Project pointer.** Merge `{"githubProject": {"owner", "number",
     "title", "url"}}` into `STATE/turma-manifest.json` (read it first; do not clobber
     other fields). Nothing else about the tickets is recorded locally - GitHub is the
     log.
 
-12. **Print the board URL** and the first ticket's issue number, with `/turma:work
-    <issue-number>` as the next command.
+13. **Print the board URL** and each workstream with its issue numbers in stack order,
+    with `/turma:workstream <slug>` for the first stream as the next command
+    (`/turma:work <issue-number>` takes a single ticket; `/turma:open` shows what is
+    open at any point).
 
 ## Rules
 
@@ -100,4 +118,6 @@ output. Read `STATE/turma-manifest.json` for an existing `githubProject` pointer
   it is flagged back to `turma:design`.
 - Never create a second Project for a repo that already has one recorded and resolvable.
 - Never invent a label; propose creating the real one.
+- Every ticket carries exactly one `workstream:<slug>` label, and the label is the only
+  place its workstream is recorded - not the title, not the body.
 - No `gh` command that mutates GitHub state runs before the report is approved.
