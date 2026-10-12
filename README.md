@@ -113,9 +113,10 @@ GitHub repo yourself (`gh repo create recipes --source=. --remote=origin --priva
 
 **3. `/turma:design`**
 With no argument it reads the README and drafts the architecture: a topic doc under
-`docs/` and one ADR per decision with consequences, numbered from what already exists,
-all marked `proposed`. Read them. Ask for changes, or approve; approved ADRs become
-`accepted`. Commit and push the docs.
+`docs/` and one ADR per decision with consequences, numbered from what already exists.
+The ADRs are written to `docs/decisions/` marked `proposed` and listed by path, not
+printed; read them there. Ask for changes, or approve; approved ADRs become `accepted`.
+Commit and push the docs.
 
 **4. `/turma:tickets docs/architecture.md`**
 It checks that the design is accepted and pushed, that a remote exists and that `gh` has

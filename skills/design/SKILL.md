@@ -13,7 +13,8 @@ that directory, or nothing - meaning the repo's `README.md` from `/turma:init`, 
 first architecture) and produce the system design that answers it: one or more ADRs for the
 decisions that carry real consequences, and a topic doc for the shape of the change.
 This is gate #1 - nothing here is `accepted` until you say so, and `turma:tickets`
-refuses to build on anything still `proposed`.
+refuses to build on anything still `proposed`. ADRs are drafted straight into
+`docs/decisions/` as `proposed` and read there - never printed to the console.
 
 `catalog/doc-templates/adr.md` and `design-doc.md` are the templates
 this skill fills. The design itself belongs to this repo - never write it into the plugin directory.
@@ -50,14 +51,18 @@ existing `docs/decisions/` and topic documents under `docs/`.
    and never reuse one even if a prior ADR was later superseded. The first ADR in a repo
    is `0001`.
 
-5. **Show the full draft** - every topic doc and ADR, in full, with the ADR numbers,
-   each `Status: proposed` - and wait.
+5. **Write each ADR to its file as `Status: proposed`, show the topic doc, and wait.**
+   The ADR files are the draft: do not print their contents to the console. List each
+   one as its path and title, one line each, so the user can open it. Show every topic
+   doc in full - it has no `proposed` status to hold it back, so it is not written yet.
 
-6. **On approval, write** each file, flipping each new ADR's `Status:` line to
+6. **On approval, write** each topic doc and flip each new ADR's `Status:` line to
    `accepted (<YYYY-MM>)` (or `accepted-with-limitation (<YYYY-MM>)` if it ships with a
    named, deliberate limitation). Cross-link: the topic doc's Decisions section lists
    the ADRs; each ADR's Context cites the problem doc. On a request for changes, revise
-   and show again - do not accept partially.
+   the ADR files in place, list the ones that changed, and show the topic doc again -
+   do not accept partially. An ADR the user drops is deleted while it is still
+   `proposed`; its number is not reused.
 
 7. **Tell the user to commit and push** the topic doc(s) and ADR(s) before running
    `/turma:tickets` - the tickets it creates link to these files by their pushed
@@ -65,9 +70,10 @@ existing `docs/decisions/` and topic documents under `docs/`.
 
 ## Rules
 
-- Nothing is `accepted` until the user has seen the full draft. `turma:tickets` checks
-  the `Status:` line and that the files are pushed; it refuses to ground a ticket in
-  anything else.
+- Nothing is `accepted` until the user has approved the draft - the `proposed` ADR
+  files and the topic doc shown. ADR contents go in their files, never the console, at
+  any step. `turma:tickets` checks the `Status:` line and that the files are pushed; it
+  refuses to ground a ticket in anything else.
 - Prefer an existing design convention in this repo over inventing a second one.
 - ADR numbers are derived from the directory listing, every time - never ask the user to
   pick one.
