@@ -67,7 +67,7 @@ host's project instructions and `package.json` for the guard command.
    If no auditor procedure exists, say so and move on; that gap is an optimizer candidate.
 
 9. **Branch, then open a PR.** One branch per ticket, from the base its workstream
-   gives it (Workstreams, below). Commit, push, `gh pr create` with `Closes #<issue>` in
+   gives it (Workstream tickets, below). Commit, push, `gh pr create` with `Closes #<issue>` in
    the body. Move the Project item to `In Review`. Stop there - merging is the user's
    call, a checkpoint before code reaches the default branch. (Under turma:workstream,
    that skill decides whether another ticket follows; nothing is merged either way.)
@@ -89,7 +89,8 @@ whether it was picked here by number or handed over by turma:workstream.
   number,headRefName,baseRefName`. The tip of the stack is the open PR whose head branch
   is no other open PR's base. Branch from the tip's branch and open the PR against it
   (`--base <tip branch>`), naming the PR it stacks on in the body. With no open PR in
-  the stream, the base is the latest default branch.
+  the stream, the base is the latest default branch. (Under turma:workaholic the base
+  is the tip of that run's single stack instead.)
 - **Label the PR.** `gh pr create --label "workstream:<slug>"`. That label is how the
   next ticket finds the stack; a stream PR without it breaks the stack.
 - **Order.** If `$issue` names a ticket while a lower-numbered one in its workstream is
