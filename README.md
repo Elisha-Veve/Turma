@@ -77,6 +77,7 @@ In an empty repo folder, open your assistant, then run the workflow:
 /turma:tickets docs/<topic>.md          # GitHub Issues on a Project board; approve the batch
 /turma:work                             # implement the next ticket, open a PR
 /turma:workstream <slug>                # or a whole workstream, as stacked PRs
+/turma:workaholic                       # or every ticket that needs no feedback, until stopped
 /turma:open                             # what is open: tickets, PRs, stranded branches
 ```
 
@@ -113,9 +114,10 @@ GitHub repo yourself (`gh repo create recipes --source=. --remote=origin --priva
 
 **3. `/turma:design`**
 With no argument it reads the README and drafts the architecture: a topic doc under
-`docs/` and one ADR per decision with consequences, numbered from what already exists,
-all marked `proposed`. Read them. Ask for changes, or approve; approved ADRs become
-`accepted`. Commit and push the docs.
+`docs/` and one ADR per decision with consequences, numbered from what already exists.
+The ADRs are written to `docs/decisions/` marked `proposed` and listed by path, not
+printed; read them there. Ask for changes, or approve; approved ADRs become `accepted`.
+Commit and push the docs.
 
 **4. `/turma:tickets docs/architecture.md`**
 It checks that the design is accepted and pushed, that a remote exists and that `gh` has
@@ -139,6 +141,18 @@ The slug is the part of the label after `workstream:`. It works a whole workstre
 `/turma:work`, one PR each, every PR stacked on the one before and carrying the
 workstream label. It does not wait for a merge between them, and stops where a guard
 fails. Merge the stack from the bottom up.
+
+**7. `/turma:workaholic`**
+It works through every open ticket that can be finished without asking you anything:
+workstream after workstream, no pause between tickets. Everything it opens is one stack:
+each PR is based on the one before, across workstreams, so you merge it bottom to top. A ticket that needs
+an answer is parked with a comment saying what it needs, and the rest of its workstream
+waits with it. It runs until you tell it to stop or nothing safe is left.
+
+`/turma:workaholic extreme` does not park a ticket for a decision. It makes the decision,
+lists it in that PR under "Decisions made without you", and continues until every ticket
+has a PR. It still skips tickets assigned to someone else, and still stops a workstream
+when the guard fails or the work needs something outside the repo. Neither mode merges.
 
 **`/turma:open`**, at any point, lists every open work item: tickets grouped by
 workstream with their board status and PR, PRs that close no ticket, and branches with
@@ -192,6 +206,7 @@ is logged so the next `bootstrap` starts smarter. If nothing is worth adding, it
 | `/turma:review` | `$review` | Review completed work in a working tree, commit range or pull request against its requirements and report actionable defects, regressions and missing acceptance criteria. |
 | `/turma:tickets` | `$tickets` | Break an approved system design into GitHub Issues on this repo's GitHub Project board, each one grounded in the design section it implements and labelled with its workstream, and hold the whole batch for approval before anything is created on GitHub. |
 | `/turma:work` | `$work` | Implement one GitHub Issue from its approved design, run the guard and any repo auditor procedure, open a PR stacked on its workstream's open PRs, and update its Project status. |
+| `/turma:workaholic` | `$workaholic` | Work through the open tickets that need no feedback, one after another as a single stack of PRs, until the user stops it or no safe ticket is left. |
 | `/turma:workstream` | `$workstream` | Work every open ticket of one workstream in order through turma:work, as a stack of PRs each based on the one before. |
 <!-- /generated:skills -->
 
@@ -215,7 +230,9 @@ grounded agent looks like.
 **Planning.** Every step ends in a gate. `init` writes nothing until you approve the
 README. `design` marks nothing `accepted` until you approve the ADRs. `tickets` creates
 nothing on GitHub until you approve the full list of `gh` commands. `work` opens a PR and
-stops; you merge. `workstream` opens one stacked PR per ticket and merges none of them. Each ticket cites the design section it implements by an absolute link,
+stops; you merge. `workstream` opens one stacked PR per ticket and merges none of them. `workaholic` has
+no gate between tickets, by design: what remains is the guard before each PR and your
+merge after it. Each ticket cites the design section it implements by an absolute link,
 so a ticket that cannot cite one is not created. One ticket is in flight at a time,
 checked live on the Project board.
 

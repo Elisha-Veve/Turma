@@ -23,6 +23,11 @@ reads that README. After that, each feature runs the loop:
    A ticket's PR stacks on its workstream's open PRs.
 5. `/turma:workstream <slug>` - work a whole workstream: its tickets in order through
    `/turma:work`, one PR each, every PR stacked on the one before. Merges nothing.
+6. `/turma:workaholic` - keep going: work every open ticket that needs no feedback,
+   stream after stream as one stack of PRs, parking the ones that do, until told to
+   stop. `/turma:workaholic
+   extreme` also makes the open decisions itself and lists each one in the PR. Merges
+   nothing in either mode.
 
 Use `/turma:open` to see every open work item: tickets by workstream with their status
 and PR, PRs with no ticket, and branches whose commits never got a PR. It changes
