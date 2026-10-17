@@ -75,8 +75,22 @@ host's project instructions and `package.json` for the guard command.
    new work item: a fresh branch from the default branch and its own PR, never another
    commit on the merged branch.
 
-10. **Report:** what changed, the guard's verdict, the auditor's verdict if one ran, the
+10. **Check the PR (below), then report:** what changed, the guard's verdict, the auditor's verdict if one ran, the
     PR link, and the board state.
+
+## Check the PR
+
+Run this after step 9 and before reporting. Fix what fails; a failure that cannot be
+fixed goes in the report as a failure.
+
+- The guard passed on the commit the PR points at, not on an earlier one.
+- The diff holds the ticket's Acceptance criteria and nothing else; anything extra
+  became an issue.
+- The PR body has `Closes #<issue>`. For a workstream ticket, the PR carries the
+  `workstream:<slug>` label, is based on the tip of its stack, and names the PR it
+  stacks on.
+- The item is `In Review` and nothing is left `In Progress`.
+- The working tree is clean and no commit is left without a PR.
 
 ## Workstream tickets
 

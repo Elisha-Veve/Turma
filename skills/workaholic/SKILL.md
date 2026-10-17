@@ -79,7 +79,9 @@ paid resource, a production system, another repo.
 
 2. **Print the queue,** once: every open ticket in queue order with its workstream,
    status, and - in safe mode - `safe` or the one-line reason it is not. State the mode.
-   Then start; do not wait for a reply.
+   Then start; do not wait for a reply. From here to the report, keep the console to
+   the bounded status in runtime conventions (Long runs): one line per ticket per phase
+   change, parking included.
 
 3. **Take the next ticket in the queue and run turma:work on it,** start to finish,
    branching from the tip of the stack and opening its PR against it. When its PR is
@@ -131,4 +133,6 @@ paid resource, a production system, another repo.
 - One ticket in flight at a time. Stack order within a workstream never changes.
 - Safe mode never asks and never decides: it parks. Extreme mode decides and writes the
   decision down where the reviewer of that PR will read it.
+- The queue and the report are printed once each; between them, one line per ticket per
+  phase change. What a parked ticket needs goes in its issue comment and the report.
 - The user's stop is immediate and needs no reason.

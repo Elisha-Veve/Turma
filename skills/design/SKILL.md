@@ -68,6 +68,17 @@ existing `docs/decisions/` and topic documents under `docs/`.
    `/turma:tickets` - the tickets it creates link to these files by their pushed
    location, and a link to an uncommitted file is a link to nothing.
 
+## Check before stopping
+
+Run this before waiting at step 5 and again before step 7. Fix what fails; do not
+report past it.
+
+- No ADR body was printed. Each ADR appears as one line: its path and title.
+- Each ADR's number was read from `docs/decisions/` when its file was written.
+- Every new ADR is `proposed` unless the user approved it in this run.
+- After approval: the topic doc's Decisions section links every new ADR, and each ADR's
+  Context cites the problem doc.
+
 ## Rules
 
 - Nothing is `accepted` until the user has approved the draft - the `proposed` ADR

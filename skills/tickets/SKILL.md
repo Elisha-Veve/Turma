@@ -91,8 +91,8 @@ output. Read `STATE/turma-manifest.json` for an existing `githubProject` pointer
    and one `gh project item-add` per ticket, workstream by workstream, each stream's
    tickets in stack order.
 
-10. **Wait for approval.** No `gh` command that creates or edits anything on GitHub runs
-   before this.
+10. **Check the report (below), then wait for approval.** No `gh` command that creates
+   or edits anything on GitHub runs before this.
 
 11. **On approval, run the commands from the report, in order.** Create missing labels.
     Create/link the Project only if none was found. Create the `Status` field
@@ -111,6 +111,19 @@ output. Read `STATE/turma-manifest.json` for an existing `githubProject` pointer
     with `/turma:workstream <slug>` for the first stream as the next command
     (`/turma:work <issue-number>` takes a single ticket; `/turma:open` shows what is
     open at any point).
+
+## Check the report
+
+Run this before showing the report at step 10. Fix what fails; do not show a report
+that fails one.
+
+- Every ticket's Grounds is an absolute blob URL on the default branch, and the file it
+  names is pushed.
+- Every ticket has exactly one `workstream:<slug>` label, and every label used either
+  exists or has its `gh label create` in the report.
+- The commands are listed in the order they will run, and each stream's `gh issue
+  create` lines are in stack order.
+- Nothing has been created or changed on GitHub yet.
 
 ## Rules
 
