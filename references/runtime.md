@@ -21,6 +21,22 @@ Claude invocation is `/turma:<name>`. In Codex, select the Turma skill through `
 when another installed skill has the same name. Translate next-step commands to
 the active host; do not tell a Codex user to type a Claude slash command.
 
+## Long runs
+
+`workstream` and `workaholic` work more than one ticket per run. They keep the console
+to bounded status:
+
+- The plan or queue table, once, before the first ticket.
+- One line per ticket each time it changes phase: started, guard verdict, PR opened,
+  parked. Under a long run `work`'s own report is that one line; its details go in the
+  final report.
+- The full report, once, at the end.
+
+No text between routine tool calls, and no file contents, diffs or issue bodies: they
+are in the files, the PR and the issue. Break this, in full sentences, for anything the
+user has to read to act: a failing guard's decisive lines, a question, a warning,
+anything that cannot be undone.
+
 ## Shared state
 
 Resolve paths using the shipped helper, with its actual absolute path:

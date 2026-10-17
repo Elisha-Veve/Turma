@@ -20,8 +20,9 @@ Read `STATE/optimizer-queue.log`, `STATE/optimizer-state.json`, recent Git histo
    even if no queue exists yet. Otherwise use the queued commits; an empty queue means
    nothing to review. Keep the original queue snapshot and its newest SHA so commits
    added during the review are not accidentally marked reviewed. A queued SHA that no ref
-   can reach, with a later entry of the same `git patch-id` (a rebase replay, recorded as
-   `<branch> (rebase)`), is superseded: review the later entry, not both.
+   can reach, with a later entry of the same `git patch-id`, is superseded: review the later
+   entry, not both. A rebase replay is recorded as `<branch> (rebase)`, but an amended or
+   cherry-picked commit carries no tag, so decide by reachability and patch-id, not the tag.
 
 2. **Review.** Use the shared [optimizer procedure](references/workflow-optimizer.md).
    Claude Code may invoke the bundled `workflow-optimizer` agent with the range,

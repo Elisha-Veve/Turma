@@ -47,7 +47,8 @@ open --label "workstream:<slug>" --json number,headRefName,baseRefName`).
 
 5. **Repeat step 4** until the stream has no `Todo` ticket left. Do not wait for a merge
    between tickets - the stack is what makes that unnecessary. Each ticket is
-   `In Review` before the next goes `In Progress`.
+   `In Review` before the next goes `In Progress`. Keep the console to the bounded
+   status in runtime conventions (Long runs): one line per phase change, no more.
 
 6. **Stop early, and say where,** when a guard fails, a ticket's grounding is not
    accepted and pushed, or a ticket turns out to need something the stream has not
@@ -67,5 +68,7 @@ open --label "workstream:<slug>" --json number,headRefName,baseRefName`).
 - One ticket in flight at a time, within the stream too.
 - One workstream per run. Two workstreams at once is turma:work's parallel mode, one
   worktree each.
+- The table at step 2 and the report at step 7 are printed once each; between them, one
+  line per ticket per phase change.
 - Never merge, and never rebase or force-push a branch whose PR is already open without
   asking.
